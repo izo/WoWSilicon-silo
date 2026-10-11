@@ -45,6 +45,12 @@ xcodebuild -scheme WoWSilicon -configuration Debug CODE_SIGNING_ALLOWED=NO test 
 
 **Release flow.** Pushing a `v*.*.*` tag triggers `.github/workflows/release.yml` (macos-26). It restores the Wine runtime, sets the version from the tag, and runs `make dmg` and `make appcast`. The appcast is published to the Pages repo. Release notes go in `docs/releases/<version>.md`. Secrets are described in `docs/releasing.md`.
 
+## Rules
+
+- **Never write to the upstream repository `https://github.com/WoWSilicon/WoWSilicon`.** No commit, push, tag, branch, issue, comment, PR, label or setting change, whether through `git`, `gh`, the GitHub API or an MCP tool. It is not this project's repository. The only repository to write to is `izo/WoWSilicon-silo` (`origin`).
+- **Name the target explicitly.** Run `git remote get-url origin` before any push, and always pass `--repo izo/WoWSilicon-silo` to `gh`. `gh` has no default repository set here and can resolve to the upstream one.
+- If a task seems to need a change upstream, stop and tell the user. Reading upstream (`gh issue view`, `gh repo view`) is fine.
+
 ## Conventions
 
 - Keep Swift 6 strict concurrency clean (`swift-tools-version: 6.0`, `SWIFT_VERSION` 6.0). `GameVersion` and friends are `Sendable` value types. Most services are `enum` namespaces or `struct`s. `LaunchService` and `TelemetryService` are `final class`es.
