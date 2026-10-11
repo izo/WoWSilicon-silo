@@ -42,7 +42,7 @@ debug:
 
 xcode:
 	@echo "Opening Xcode project..."
-	tuist generate
+	open "$(CURDIR)/WoWSilicon.xcodeproj"
 
 run: bundle
 	@echo "Launching $(APP_NAME).app..."

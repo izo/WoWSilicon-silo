@@ -62,7 +62,7 @@ Then update the version, commit it, and create and push a tag:
 
 ```sh
 tools/release/set_version.sh 2.6.0
-git add Packaging/Info.plist Project.swift docs/releases/2.6.0.md
+git add Packaging/Info.plist WoWSilicon.xcodeproj/project.pbxproj docs/releases/2.6.0.md
 git commit -m "Bump version to 2.6.0"
 git tag v2.6.0
 git push origin main --tags

@@ -12,7 +12,11 @@ build_number="${2:-$(tools/release/version_to_build_number.sh "$version")}"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" Packaging/Info.plist
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build_number" Packaging/Info.plist
 
-perl -0pi -e "s/\"MARKETING_VERSION\": \"[^\"]+\"/\"MARKETING_VERSION\": \"$version\"/" Project.swift
-perl -0pi -e "s/\"CURRENT_PROJECT_VERSION\": \"[^\"]+\"/\"CURRENT_PROJECT_VERSION\": \"$build_number\"/" Project.swift
+perl -pi -e "s/MARKETING_VERSION = [^;]+;/MARKETING_VERSION = $version;/; s/CURRENT_PROJECT_VERSION = [^;]+;/CURRENT_PROJECT_VERSION = $build_number;/" WoWSilicon.xcodeproj/project.pbxproj
+
+if [[ -f Project.swift ]]; then
+  perl -0pi -e "s/\"MARKETING_VERSION\": \"[^\"]+\"/\"MARKETING_VERSION\": \"$version\"/" Project.swift
+  perl -0pi -e "s/\"CURRENT_PROJECT_VERSION\": \"[^\"]+\"/\"CURRENT_PROJECT_VERSION\": \"$build_number\"/" Project.swift
+fi
 
 echo "Set WoWSilicon version to $version ($build_number)"

@@ -82,6 +82,14 @@ swift build
 swift test
 ```
 
+Open the Xcode project (tested with Xcode 27.2; Release builds need the Wine runtime in `.wine-runtime/`):
+
+```sh
+make xcode
+```
+
+Manual tests use a local WoW 3.3.5 client in `wow-silo-client/`. That folder is git-ignored and not part of the repository. It is being recreated, so it may be missing until then.
+
 Build the app bundle:
 
 ```sh

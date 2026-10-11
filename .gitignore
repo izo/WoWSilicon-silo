@@ -4,8 +4,9 @@ xcuserdata/
 # Tuist
 .build/
 Derived/
-*.xcodeproj
-*.xcworkspace
+
+# Local test client (Blizzard data, 19 GB; patch files come from Sources/WoWSiliconSwift/Resources/Patching)
+/wow-silo-client/
 
 # macOS
 .DS_Store

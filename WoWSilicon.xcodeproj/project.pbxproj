@@ -1,0 +1,446 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		433AC8F3CBD104F89C76723B /* Patching in Resources */ = {isa = PBXBuildFile; fileRef = D21D78C912DE769D95009BEB /* Patching */; };
+		DB688173738390CA8BBF0793 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4B8D6F592DB40A8177F35C78 /* Sparkle */; };
+		C08CD114A810884D6E47846A /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 3DE9BA0898D2D9321B1DFB5A /* Sparkle */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E69E6446E892E3922E76C82E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1781F676DEDF5767F3243DB0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 147982BEBBBCF1EA792C8730;
+			remoteInfo = WoWSilicon;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		5141EFFF35ACD6C51F274E4D /* WoWSilicon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WoWSilicon.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		68D128FAC7073081D8355714 /* WoWSiliconSwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WoWSiliconSwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D21D78C912DE769D95009BEB /* Patching */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Sources/WoWSiliconSwift/Resources/Patching; sourceTree = "<group>"; };
+		7D95B648EFA5C30BD8522A85 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F204CBFD187CCE4CC7913D74 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Makefile; sourceTree = "<group>"; };
+		3CAD2C6C3E12B36FF232D3A4 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		6D3F2D3BBDF671C1D2EB055F /* Exceptions for "Sources/WoWSiliconSwift" folder in "WoWSilicon" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/Patching/d9vk/LICENSE,
+				Resources/Patching/d9vk/d3d9.dll,
+				Resources/Patching/dxvk-kosmickrisp/d3d9.dll,
+				Resources/Patching/libSiliconPatch/vanilla/libSiliconPatch.dll,
+				Resources/Patching/libSiliconPatch/wotlk/libSiliconPatch.dll,
+				Resources/Patching/rosettax87/libRuntimeRosettax87,
+				Resources/Patching/rosettax87/rosettax87,
+				Resources/Patching/vanilla-tweaks/LICENSE,
+				Resources/Patching/vanilla-tweaks/vanilla-tweaks.exe,
+				Resources/Patching/winerosetta/libDllLdr.dll,
+				Resources/Patching/winerosetta/winerosetta.dll,
+				Resources/Patching/x87sidecar/LICENSE,
+				Resources/Patching/x87sidecar/VERSION,
+				Resources/Patching/x87sidecar/x87sidecar,
+			);
+			target = 147982BEBBBCF1EA792C8730 /* WoWSilicon */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		1369CE758DE91ECD50B7E938 /* WoWSiliconSwift */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				6D3F2D3BBDF671C1D2EB055F /* Exceptions for "Sources/WoWSiliconSwift" folder in "WoWSilicon" target */,
+			);
+			path = Sources/WoWSiliconSwift;
+			sourceTree = "<group>";
+		};
+		CEC4290FD49D87B0F83D52CD /* WoWSiliconSwiftTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Tests/WoWSiliconSwiftTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5CED10CA8335FBF5C2F262D5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DB688173738390CA8BBF0793 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EC51286CCF903911EFA27E6B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C08CD114A810884D6E47846A /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A85897F1A32FE9B91C081CD = {
+			isa = PBXGroup;
+			children = (
+				1369CE758DE91ECD50B7E938 /* WoWSiliconSwift */,
+				CEC4290FD49D87B0F83D52CD /* WoWSiliconSwiftTests */,
+				D21D78C912DE769D95009BEB /* Patching */,
+				58588877B781B8FA872203FF /* Packaging */,
+				F204CBFD187CCE4CC7913D74 /* Makefile */,
+				3CAD2C6C3E12B36FF232D3A4 /* Package.swift */,
+				B88D7E26791946AEFDCC8BB7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		58588877B781B8FA872203FF /* Packaging */ = {
+			isa = PBXGroup;
+			children = (
+				7D95B648EFA5C30BD8522A85 /* Info.plist */,
+			);
+			path = Packaging;
+			sourceTree = "<group>";
+		};
+		B88D7E26791946AEFDCC8BB7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5141EFFF35ACD6C51F274E4D /* WoWSilicon.app */,
+				68D128FAC7073081D8355714 /* WoWSiliconSwiftTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		147982BEBBBCF1EA792C8730 /* WoWSilicon */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 102CDF76782127CA3362232A /* Build configuration list for PBXNativeTarget "WoWSilicon" */;
+			buildPhases = (
+				C8E861EA493B65F76FEADB32 /* Sources */,
+				5CED10CA8335FBF5C2F262D5 /* Frameworks */,
+				71D5C8DD194F113FA882DF73 /* Resources */,
+				560016472D29E977AC83E8D8 /* Bundle Wine runtime */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				1369CE758DE91ECD50B7E938 /* WoWSiliconSwift */,
+			);
+			name = WoWSilicon;
+			packageProductDependencies = (
+				4B8D6F592DB40A8177F35C78 /* Sparkle */,
+			);
+			productName = WoWSilicon;
+			productReference = 5141EFFF35ACD6C51F274E4D /* WoWSilicon.app */;
+			productType = "com.apple.product-type.application";
+		};
+		208C54D1C19CFF7994A925A1 /* WoWSiliconSwiftTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 357D37B4F15BC7544A4EB099 /* Build configuration list for PBXNativeTarget "WoWSiliconSwiftTests" */;
+			buildPhases = (
+				AD3D863858E44A74350712C1 /* Sources */,
+				EC51286CCF903911EFA27E6B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1F9E150E32A9578AA9D8ED7A /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				CEC4290FD49D87B0F83D52CD /* WoWSiliconSwiftTests */,
+			);
+			name = WoWSiliconSwiftTests;
+			packageProductDependencies = (
+				3DE9BA0898D2D9321B1DFB5A /* Sparkle */,
+			);
+			productName = WoWSiliconSwiftTests;
+			productReference = 68D128FAC7073081D8355714 /* WoWSiliconSwiftTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		1781F676DEDF5767F3243DB0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					208C54D1C19CFF7994A925A1 = {
+						CreatedOnToolsVersion = 27.2;
+						TestTargetID = 147982BEBBBCF1EA792C8730;
+					};
+				};
+			};
+			buildConfigurationList = AE337F34E2A625BD4692BD7E /* Build configuration list for PBXProject "WoWSilicon" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				fr,
+			);
+			mainGroup = 0A85897F1A32FE9B91C081CD;
+			packageReferences = (
+				58E3D0F653411396CD866E4F /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
+			productRefGroup = B88D7E26791946AEFDCC8BB7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				147982BEBBBCF1EA792C8730 /* WoWSilicon */,
+				208C54D1C19CFF7994A925A1 /* WoWSiliconSwiftTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		71D5C8DD194F113FA882DF73 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				433AC8F3CBD104F89C76723B /* Patching in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		560016472D29E977AC83E8D8 /* Bundle Wine runtime */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle Wine runtime";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/tools/xcode/bundle-wine-runtime.sh\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C8E861EA493B65F76FEADB32 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AD3D863858E44A74350712C1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1F9E150E32A9578AA9D8ED7A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 147982BEBBBCF1EA792C8730 /* WoWSilicon */;
+			targetProxy = E69E6446E892E3922E76C82E /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		720053A8D23AE1812A418094 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		935AC6FFCB996012ECD3A455 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		6FD51FE8A48050B44AFCCF21 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = turtle;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 30202;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Packaging/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 3.2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wowsilicon.swift;
+				PRODUCT_MODULE_NAME = WoWSiliconSwift;
+				PRODUCT_NAME = WoWSilicon;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		B2F784F5305FC92A81050698 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = turtle;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 30202;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Packaging/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 3.2.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wowsilicon.swift;
+				PRODUCT_MODULE_NAME = WoWSiliconSwift;
+				PRODUCT_NAME = WoWSilicon;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		4F1805E2FEC17D315B8F5CF3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wowsilicon.swift.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WoWSilicon.app/Contents/MacOS/WoWSilicon";
+			};
+			name = Debug;
+		};
+		68D252F1D9E55DEBB9712E88 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wowsilicon.swift.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WoWSilicon.app/Contents/MacOS/WoWSilicon";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AE337F34E2A625BD4692BD7E /* Build configuration list for PBXProject "WoWSilicon" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				720053A8D23AE1812A418094 /* Debug */,
+				935AC6FFCB996012ECD3A455 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		102CDF76782127CA3362232A /* Build configuration list for PBXNativeTarget "WoWSilicon" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6FD51FE8A48050B44AFCCF21 /* Debug */,
+				B2F784F5305FC92A81050698 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		357D37B4F15BC7544A4EB099 /* Build configuration list for PBXNativeTarget "WoWSiliconSwiftTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4F1805E2FEC17D315B8F5CF3 /* Debug */,
+				68D252F1D9E55DEBB9712E88 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		58E3D0F653411396CD866E4F /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4B8D6F592DB40A8177F35C78 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 58E3D0F653411396CD866E4F /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+		3DE9BA0898D2D9321B1DFB5A /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 58E3D0F653411396CD866E4F /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 1781F676DEDF5767F3243DB0 /* Project object */;
+}
