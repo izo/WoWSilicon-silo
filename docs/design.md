@@ -45,9 +45,9 @@ s'aligne sur lui, jamais l'inverse.
 >    *Falsifiable : du laiton sur un élément non actionnable, ou un état signalé par
 >    la seule couleur, est un défaut.*
 > 4. **Clair et sombre sont deux dessins.** Le sombre n'est pas l'inverse du clair :
->    la polarité du bouton Lancer s'inverse (texte blanc sur laiton profond en
->    clair, texte encre sur laiton lumineux en sombre), les cartes perdent leur
->    filet en sombre et gagnent un niveau d'élévation.
+>    les cartes perdent leur filet en sombre, la teinte du bouton Lancer passe du
+>    laiton profond au laiton lumineux, et le libellé suit le système
+>    (`.borderedProminent`), sans couleur figée.
 
 ### Ce que l'état actuel (`docs/assets/launcher-preview.png`) enseigne
 
@@ -89,7 +89,7 @@ Colonne **HIG** : id de règle renvoyé par `hig-ask` (vault capturé le 2026-09
 | Token | Clair | Sombre | Usage | HIG |
 |---|---|---|---|---|
 | `accent.fill` | `#8C6A1C` laiton profond | `#D9B65C` laiton lumineux | Fond du bouton Lancer, sélection, contrôles actifs | `branding-002`, `color-012` |
-| `accent.onFill` | `#FFFFFF` (5,01:1 sur `#8C6A1C`) | `#1C1606` encre (9,25:1 sur `#D9B65C`) | Libellé posé sur `accent.fill` | `accessibility-004` |
+| `accent.onFill` | Libellé système (`.borderedProminent`) ; `#FFFFFF` à titre de référence (5,01:1 sur `#8C6A1C`) | Libellé système ; `#1C1606` à titre de référence (9,25:1 sur `#D9B65C`) | Libellé posé sur `accent.fill` quand l'accent est le laiton. Pas de couleur de libellé figée | `accessibility-004` |
 | `accent.fill.highContrast` | `#7A5C14` (6,23:1 avec blanc) | `#E3C26A` (10,45:1 avec encre) | Variante « Augmenter le contraste » | `color-002` |
 | `brand.cobalt` | `#1F4FA0` | `#1F4FA0` | Réservé à l'icône d'app et à « À propos ». Jamais dans l'UI. | choix maison |
 
@@ -97,7 +97,9 @@ Colonne **HIG** : id de règle renvoyé par `hig-ask` (vault capturé le 2026-09
 > Si l'utilisateur choisit une couleur d'accentuation autre que « multicolore »
 > dans Réglages Système, macOS remplace le laiton partout (comportement documenté
 > page Color › macOS › App accent colors). Le design doit tenir avec l'accent
-> bleu, graphite, etc. — vérifié sur l'artboard `Main-Light-Ready-GraphiteAccent`.
+> bleu, graphite, etc. Le libellé de Lancer suit alors le système. Aucune promesse
+> de rendu identique hors multicolore : l'artboard `Main-Light-Ready-GraphiteAccent`
+> reste à produire et à vérifier.
 
 ### Couleur — sémantique (système, aucune valeur en dur)
 
@@ -106,14 +108,12 @@ Colonne **HIG** : id de règle renvoyé par `hig-ask` (vault capturé le 2026-09
 | `bg.window` | `windowBackgroundColor` | `#ECECEC` | `#1E1E1E` | Fond de la zone de détail | `color-010`, `materials-001` |
 | `bg.group` | `controlBackgroundColor` (`Form` `.grouped`) | `#FFFFFF` | `#2A2A2C` | Cartes de section | `color-010` |
 | `text.primary` | `labelColor` | `#000000 @85 %` | `#FFFFFF @85 %` | Titres, valeurs | `accessibility-005` |
-| `text.secondary` | `secondaryLabelColor` | `#000000 @50 %` | `#FFFFFF @55 %` | Libellés, sous-titre de fenêtre | `accessibility-005` |
+| `text.secondary` | `secondaryLabelColor` | `#000000 @50 %` | `#FFFFFF @55 %` | Libellés non critiques, sous-titre de fenêtre. ≈ 3,9:1 en clair : **jamais** d'information critique (état, raison de blocage, valeur) | `accessibility-004`, `accessibility-005` |
 | `text.tertiary` | `tertiaryLabelColor` | `#000000 @26 %` | `#FFFFFF @25 %` | Indices non essentiels uniquement | `accessibility-004` |
 | `separator` | `separatorColor` | `#000000 @10 %` | `#FFFFFF @10 %` | Filets entre lignes de section | `color-010` |
 | `status.ready` | `systemGreen` | `#34C759` | `#30D158` | **Symbole** `checkmark.circle.fill` uniquement | `color-007`, `color-011` |
 | `status.action` | `systemOrange` | `#FF9500` | `#FF9F0A` | **Symbole** `exclamationmark.circle.fill` (patch requis, runtime absent) | `color-007`, `color-011` |
 | `status.error` | `systemRed` | `#FF3B30` | `#FF453A` | **Symbole** `xmark.octagon.fill` + texte d'explication | `color-007`, `feedback-006` |
-| `status.idle` | `secondaryLabelColor` | — | — | Symbole `circle.dashed` (non vérifié) | `color-001` |
-| `status.running` | `accent.fill` | — | — | Point animé du bouton Lancer en cours | `color-012` |
 
 Règle : **un état = symbole coloré + texte en `text.primary`**. Jamais de texte
 coloré pour porter un état (`color-007`, `accessibility-006`).
@@ -149,7 +149,6 @@ Specifications). Pas de Dynamic Type sur macOS. Une seule famille (SF Pro + SF M
 | `type.secondary` | Callout | 12 / 15 | Regular | Explications sous une ligne, chemin du dossier | `typography-009` |
 | `type.sidebarHeader` | Subheadline | 11 / 14 | Semibold | En-têtes de groupe de la barre latérale | `typography-019` |
 | `type.badge` | Caption 2 | 10 / 13 | Semibold | Badge de version (« 3.3.5a ») | `typography-009` |
-| `type.launch` | Title 3 | 15 / 20 | Semibold | Libellé du bouton Lancer | `typography-004`, `buttons-004` |
 | `type.mono` | SF Mono, Callout | 12 / 15 | Regular | Chemins, realmlist, variables d'environnement | choix maison |
 
 Interdits : graisses Light/Thin (`typography-003`), italique décoratif (choix
@@ -186,7 +185,6 @@ maison), troisième famille (`typography-005`).
 |---|---|---|
 | `radius.window` | Système (macOS 26) — jamais redessiné | `windows-008` |
 | `radius.control` | Système : capsule pour boutons | `buttons-029` |
-| `radius.card` | 12 pt, concentrique au rayon de fenêtre | choix maison |
 | `radius.glyph` | 7 pt (glyphe de profil 28 pt) | choix maison |
 
 ### Mouvement
@@ -232,7 +230,7 @@ Décrits en détail dans [[design-wireframe/main-window/CARD|Spec Card — fenê
 | Aspect | Clair | Sombre | HIG |
 |---|---|---|---|
 | Fond du détail | `bg.window` gris clair, cartes blanches **avec** filet `separator` | `bg.window` anthracite, cartes `bg.group` **sans** filet, l'écart de valeur suffit | `dark-mode-002`, `dark-mode-007` |
-| Bouton Lancer | Laiton profond `#8C6A1C`, libellé blanc | Laiton lumineux `#D9B65C`, libellé encre `#1C1606` | `dark-mode-006`, `accessibility-004` |
+| Bouton Lancer | Laiton profond `#8C6A1C` (multicolore), libellé système | Laiton lumineux `#D9B65C` (multicolore), libellé système | `dark-mode-006`, `accessibility-004` |
 | Ombre du bouton Lancer | Aucune | Aucune (pas de halo lumineux) | choix maison |
 | Symboles d'état | Variantes claires système | Variantes sombres système | `dark-mode-005` |
 | Glyphe de profil | Fond blanc, chiffres `text.secondary` | Fond `#3A3A3C`, chiffres `text.primary` | `dark-mode-003` |
@@ -275,6 +273,8 @@ la vue Addons l'installent.
 11. Alerte de confirmation pour retirer le patch (action réversible) — `alerts-003`.
 12. Interrupteur « Thème clair / sombre » dans les réglages (`dark-mode-001`).
 13. Indicateur rotatif avec libellé (`progress-indicators-013`) ; un téléchargement de runtime est **déterminé** (`progress-indicators-001`).
+14. Information critique en `text.secondary` (≈ 3,9:1 en clair, sous le seuil de 4,5:1 de `accessibility-004`).
+15. Couleur de libellé figée sur le bouton Lancer, qui casse dès que l'accent système change.
 
 ## Audit findings (rolling)
 
@@ -283,4 +283,5 @@ la vue Addons l'installent.
 
 ## Changelog
 
+- 2026-10-11 · jony · Passe impeccable (Assessment A 25/40, détecteur non concluant) : états d'erreur ajoutés à la CARD, libellé de Lancer rendu au système, `text.secondary` retiré des informations critiques, `type.launch` et `radius.card` retirés, `status.idle` et `status.running` retirés, anti-patterns 14 et 15 ajoutés.
 - 2026-10-11 · jony · Création du design system v1 : macOS 26 uniquement, Liquid Glass réservé au chrome système, accent laiton (clair `#8C6A1C` / sombre `#D9B65C`), états symbole + texte, typo SF macOS intégrée, fenêtre principale refondue en `NavigationSplitView` redimensionnable (profils en barre latérale, Lancer en en-tête). Rejet documenté de la mise en page de `launcher-preview.png`.
