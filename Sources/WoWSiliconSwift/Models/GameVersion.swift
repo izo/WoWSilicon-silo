@@ -274,6 +274,9 @@ struct VersionSettings: Codable, Equatable, Sendable {
     var audioInputDeviceID: String
     var spatializeStereo: Bool
     var normalizeAudio: Bool
+    /// Battle.net portal (`host:port`) written to `WTF/Config.wtf` before each launch of an x64
+    /// client. Empty means "leave Config.wtf alone".
+    var portal: String
 
     var enableRosettaX87: Bool {
         get { x87Backend != .disabled }
@@ -297,7 +300,8 @@ struct VersionSettings: Codable, Equatable, Sendable {
         audioOutputDeviceID: String = "",
         audioInputDeviceID: String = "",
         spatializeStereo: Bool = false,
-        normalizeAudio: Bool = false
+        normalizeAudio: Bool = false,
+        portal: String = ""
     ) {
         self.enableVanillaTweaks = enableVanillaTweaks
         self.remapOptionAsAlt = remapOptionAsAlt
@@ -315,6 +319,7 @@ struct VersionSettings: Codable, Equatable, Sendable {
         self.audioInputDeviceID = audioInputDeviceID
         self.spatializeStereo = spatializeStereo
         self.normalizeAudio = normalizeAudio
+        self.portal = portal
     }
 
     enum CodingKeys: String, CodingKey {
@@ -327,6 +332,7 @@ struct VersionSettings: Codable, Equatable, Sendable {
         case audioOutputDeviceID, audioInputDeviceID
         case spatialAudioMode, spatializeStereo
         case normalizeAudio = "normalize_audio"
+        case portal
         // Legacy keys kept for migration only
         case nightMode
         case reduceTerrainDistance, setMultisampleTo2x, setShadowLOD0, userDisabledShadowLOD
@@ -361,6 +367,7 @@ struct VersionSettings: Codable, Equatable, Sendable {
         normalizeAudio = try container.decodeIfPresent(Bool.self, forKey: .normalizeAudio)
             ?? container.decodeIfPresent(Bool.self, forKey: .nightMode)
             ?? false
+        portal = try container.decodeIfPresent(String.self, forKey: .portal) ?? ""
 
         if let gs = try container.decodeIfPresent(GraphicsSettings.self, forKey: .graphicsSettings) {
             graphicsSettings = gs
@@ -399,6 +406,7 @@ struct VersionSettings: Codable, Equatable, Sendable {
         try container.encode(audioInputDeviceID, forKey: .audioInputDeviceID)
         try container.encode(spatializeStereo, forKey: .spatializeStereo)
         try container.encode(normalizeAudio, forKey: .normalizeAudio)
+        try container.encode(portal, forKey: .portal)
     }
 
     func mergedWithDefaults(_ defaults: VersionSettings) -> VersionSettings {
@@ -697,7 +705,8 @@ struct VersionManager: Codable, Sendable {
         settings: VersionSettings(
             autoDeleteWdb: false,
             enableLibSiliconPatch: false,
-            x87Backend: .disabled
+            x87Backend: .disabled,
+            portal: "wow.ulk.me:1119"
         )
     )
 

@@ -179,6 +179,13 @@ strings -a "$secur32" | grep 'gnutls_global_init' >/dev/null || {
   exit 1
 }
 
+for library in libgnutls.30.dylib libfreetype.6.dylib; do
+  [[ -e "$runtime/lib/wine/x86_64-unix/$library" ]] || {
+    echo "$library is not reachable from lib/wine/x86_64-unix: Wine cannot load it (no TLS or fonts)." >&2
+    exit 1
+  }
+done
+
 arch -x86_64 "$runtime/bin/wine" --version >/dev/null
 
 echo "Validated WoWSilicon Wine runtime at $runtime"

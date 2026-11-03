@@ -137,6 +137,19 @@ if [[ -f "$output/lib/external/libMoltenVK.dylib" ]]; then
   ln -sf "../../external/libMoltenVK.dylib" "$output/lib/wine/x86_64-unix/libvulkan.1.dylib"
 fi
 
+# Wine loads GnuTLS, FreeType, libpng and SDL by soname from the Unix side modules
+# (rpath @loader_path). DYLD_LIBRARY_PATH does not reach those dlopen calls, so without
+# these links the client loses TLS (BLZ51901015 at login) and fonts. Never override a link
+# that already exists (libvulkan.1.dylib must keep pointing at MoltenVK).
+if [[ -d "$output/lib/external" ]]; then
+  mkdir -p "$output/lib/wine/x86_64-unix"
+  for library in "$output"/lib/external/*.dylib; do
+    name="$(basename "$library")"
+    [[ -e "$output/lib/wine/x86_64-unix/$name" || -L "$output/lib/wine/x86_64-unix/$name" ]] \
+      || ln -s "../../external/$name" "$output/lib/wine/x86_64-unix/$name"
+  done
+fi
+
 mkdir -p "$output/share/wowsilicon"
 cp -X "$manifest" "$output/share/wowsilicon/runtime-lock.json"
 
