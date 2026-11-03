@@ -8,6 +8,9 @@ Derived/
 # Local test client (Blizzard data, 19 GB; patch files come from Sources/WoWSiliconSwift/Resources/Patching)
 /wow-silo-client/
 
+# Local BfA 8.3.7 x64 test client (59 GB, Blizzard data)
+/BFA/
+
 # macOS
 .DS_Store
 
