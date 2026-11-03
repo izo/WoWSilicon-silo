@@ -5,6 +5,8 @@ enum WineLaunchFailure: Equatable, Sendable {
     case prefixNot64Bit
     case vulkanUnavailable
     case executableNotFound
+    case tlsLibraryMissing
+    case clientCrashed
     case unhandledException
     case exitedAtStartup(code: Int32)
 
@@ -17,6 +19,10 @@ enum WineLaunchFailure: Equatable, Sendable {
             return "The game could not create a Vulkan instance, so the graphics driver is unavailable. Check the Vulkan driver in Graphics settings (MoltenVK is the safe choice) and that the Wine runtime is complete." + logLine
         case .executableNotFound:
             return "Wine could not find the game executable. Check the game path and executable name of this profile." + logLine
+        case .tlsLibraryMissing:
+            return "The bundled Wine runtime cannot load GnuTLS (libgnutls), so secure connections and the Battle.net login do not work (BLZ51901015) and the client may crash. The runtime's external libraries are not linked into lib/wine/x86_64-unix: reinstall or rebuild the Wine runtime (tools/wine-runtime/validate.sh detects this)." + logLine
+        case .clientCrashed:
+            return "The game client crashed (ERROR #132, fatal exception). A crash report was written to the Errors folder inside the game folder." + logLine
         case .unhandledException:
             return "The game crashed with an unhandled exception." + logLine
         case .exitedAtStartup(let code):
@@ -49,6 +55,12 @@ enum WineOutputClassifier {
         if has("vkCreateInstance", "Failed to create Vulkan instance", "VK_ERROR_INCOMPATIBLE_DRIVER", "VK_ERROR_INITIALIZATION_FAILED") {
             return .vulkanUnavailable
         }
+        // Root cause first: without GnuTLS the login fails or the client dies right after.
+        // The FreeType warning ("Wine cannot find the FreeType font library") is deliberately not
+        // matched: Wine on macOS falls back to CoreText fonts and prints it on healthy runs too.
+        if has("Failed to load libgnutls", "no schannel support") { return .tlsLibraryMissing }
+        // The WoW client's own crash handler (before Wine's generic unhandled exception).
+        if has("ERROR #132", "Fatal exception!") { return .clientCrashed }
         if has("Unhandled exception", "page fault on") { return .unhandledException }
 
         if duration < startupWindow { return .exitedAtStartup(code: exitCode) }

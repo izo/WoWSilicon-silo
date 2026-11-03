@@ -42,10 +42,41 @@ final class WineOutputClassifierTests: XCTestCase {
         XCTAssertEqual(WineOutputClassifier.classify(exitCode: 1, duration: 900, outputTail: pf), .unhandledException)
     }
 
+    func testMissingGnuTLS() {
+        let out = """
+        0024:err:winediag:process_attach Failed to load libgnutls, secure connections will not be available.
+        0024:err:secur32:SECUR32_initSchannelSP no schannel support, expect problems
+        """
+        XCTAssertEqual(WineOutputClassifier.classify(exitCode: 1, duration: 600, outputTail: out), .tlsLibraryMissing)
+        XCTAssertNil(WineOutputClassifier.classify(exitCode: 0, duration: 600, outputTail: out))
+        let message = WineLaunchFailure.tlsLibraryMissing.userMessage(logPath: nil)
+        XCTAssertTrue(message.contains("libgnutls") && message.contains("validate.sh"))
+    }
+
+    func testClientCrashError132() {
+        let out = """
+        ACCESS_VIOLATION : error 132: ERROR #132 (0x85100084) Fatal exception!
+        The instruction at "0x0000000141bdf5ca" referenced memory at "0x0000000000000000".
+        """
+        XCTAssertEqual(WineOutputClassifier.classify(exitCode: 1, duration: 900, outputTail: out), .clientCrashed)
+        XCTAssertTrue(WineLaunchFailure.clientCrashed.userMessage(logPath: "/l.log").contains("Errors"))
+    }
+
+    func testRootCausesOutrankTheClientCrash() {
+        let out = "Failed to load libgnutls, secure connections will not be available.\nERROR #132 (0x85100084) Fatal exception!"
+        XCTAssertEqual(WineOutputClassifier.classify(exitCode: 1, duration: 900, outputTail: out), .tlsLibraryMissing)
+    }
+
+    func testFreeTypeWarningAloneIsNotAnError() {
+        let out = "0024:err:font:init_freetype_lib Wine cannot find the FreeType font library."
+        XCTAssertNil(WineOutputClassifier.classify(exitCode: 1, duration: 900, outputTail: out))
+        XCTAssertEqual(WineOutputClassifier.classify(exitCode: 1, duration: 2, outputTail: out), .exitedAtStartup(code: 1))
+    }
+
     func testMessagesCarryLogPath() {
         let path = "/Users/x/Library/Logs/SiloWow/launch-a.log"
         let failures: [WineLaunchFailure] = [
-            .prefixNot64Bit, .vulkanUnavailable, .executableNotFound, .unhandledException, .exitedAtStartup(code: 1)
+            .prefixNot64Bit, .vulkanUnavailable, .executableNotFound, .tlsLibraryMissing, .clientCrashed, .unhandledException, .exitedAtStartup(code: 1)
         ]
         for failure in failures {
             XCTAssertTrue(failure.userMessage(logPath: path).contains(path))
