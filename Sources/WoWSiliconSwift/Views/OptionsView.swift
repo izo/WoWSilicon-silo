@@ -105,7 +105,11 @@ struct OptionsView: View {
             }
             optionAsAltControls
             retinaModeControls
-            if viewModel.currentVersion?.isWorldOfWarcraftX64 != true {
+            if viewModel.currentVersion?.isWorldOfWarcraftX64 == true {
+                Divider()
+                    .padding(.vertical, 4)
+                clientConfigControls
+            } else {
                 rosettaX87Controls
             }
             Divider()
@@ -682,6 +686,81 @@ struct OptionsView: View {
             return "\(sampleRate / 1_000) kHz"
         }
         return String(format: "%.1f kHz", Double(sampleRate) / 1_000)
+    }
+
+    /// Profile-scoped settings written to the client's `WTF/Config.wtf` at each launch (x64 profiles only).
+    private var clientConfigControls: some View {
+        let portal = viewModel.stringBinding(\.portal)
+        let trimmedPortal = portal.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let portalIsInvalid = !trimmedPortal.isEmpty && !ClientConfigWTFService.isValidPortal(trimmedPortal)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Text("Client settings (Config.wtf)")
+                .font(.headline)
+            Text("Written to WTF/Config.wtf when you press Play. Other lines in the file are kept.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Portal")
+                    Spacer()
+                    TextField("host:port", text: portal)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 220)
+                        .autocorrectionDisabled()
+                }
+                if portalIsInvalid {
+                    Label("Use a host name with an optional port, for example wow.ulk.me:1119. This value is not written.", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text("Battle.net server the client connects to. Leave empty to keep the client's own value.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            localePicker("Text language", binding: viewModel.stringBinding(\.textLocale))
+            localePicker("Voice language", binding: viewModel.stringBinding(\.audioLocale))
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Graphics API")
+                    Spacer()
+                    Text(ClientConfigWTFService.forcedGxApi)
+                        .foregroundStyle(.secondary)
+                }
+                Text("Fixed to \(ClientConfigWTFService.forcedGxApi): the game is launched with -d3d11, and Config.wtf is kept in line with it.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func localePicker(_ title: String, binding: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(title)
+                Spacer()
+                Picker("", selection: binding) {
+                    Text("Don't change").tag("")
+                    ForEach(ClientConfigWTFService.supportedLocales, id: \.self) { code in
+                        Text(code).tag(code)
+                    }
+                }
+                .labelsHidden()
+                .fixedSize()
+            }
+            if !binding.wrappedValue.isEmpty && !ClientConfigWTFService.isValidLocale(binding.wrappedValue) {
+                Label("\(binding.wrappedValue) is not a client language code. This value is not written.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
     }
 
     private var rosettaX87Controls: some View {

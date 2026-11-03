@@ -275,7 +275,7 @@ final class LaunchService: @unchecked Sendable {
         }
 
         if performPrelaunchActions, isX64 {
-            try ClientPortalService.apply(portal: version.settings.portal, gameURL: gameURL, fileManager: fileManager)
+            try ClientConfigWTFService.apply(settings: version.settings, gameURL: gameURL, fileManager: fileManager)
         }
 
         try Task.checkCancellation()

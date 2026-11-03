@@ -277,6 +277,10 @@ struct VersionSettings: Codable, Equatable, Sendable {
     /// Battle.net portal (`host:port`) written to `WTF/Config.wtf` before each launch of an x64
     /// client. Empty means "leave Config.wtf alone".
     var portal: String
+    /// Client text / voice-over locale (e.g. `frFR`) written to Config.wtf for x64 clients.
+    /// Empty means "leave Config.wtf alone".
+    var textLocale: String
+    var audioLocale: String
 
     var enableRosettaX87: Bool {
         get { x87Backend != .disabled }
@@ -301,7 +305,9 @@ struct VersionSettings: Codable, Equatable, Sendable {
         audioInputDeviceID: String = "",
         spatializeStereo: Bool = false,
         normalizeAudio: Bool = false,
-        portal: String = ""
+        portal: String = "",
+        textLocale: String = "",
+        audioLocale: String = ""
     ) {
         self.enableVanillaTweaks = enableVanillaTweaks
         self.remapOptionAsAlt = remapOptionAsAlt
@@ -320,6 +326,8 @@ struct VersionSettings: Codable, Equatable, Sendable {
         self.spatializeStereo = spatializeStereo
         self.normalizeAudio = normalizeAudio
         self.portal = portal
+        self.textLocale = textLocale
+        self.audioLocale = audioLocale
     }
 
     enum CodingKeys: String, CodingKey {
@@ -332,7 +340,7 @@ struct VersionSettings: Codable, Equatable, Sendable {
         case audioOutputDeviceID, audioInputDeviceID
         case spatialAudioMode, spatializeStereo
         case normalizeAudio = "normalize_audio"
-        case portal
+        case portal, textLocale, audioLocale
         // Legacy keys kept for migration only
         case nightMode
         case reduceTerrainDistance, setMultisampleTo2x, setShadowLOD0, userDisabledShadowLOD
@@ -368,6 +376,8 @@ struct VersionSettings: Codable, Equatable, Sendable {
             ?? container.decodeIfPresent(Bool.self, forKey: .nightMode)
             ?? false
         portal = try container.decodeIfPresent(String.self, forKey: .portal) ?? ""
+        textLocale = try container.decodeIfPresent(String.self, forKey: .textLocale) ?? ""
+        audioLocale = try container.decodeIfPresent(String.self, forKey: .audioLocale) ?? ""
 
         if let gs = try container.decodeIfPresent(GraphicsSettings.self, forKey: .graphicsSettings) {
             graphicsSettings = gs
@@ -407,6 +417,8 @@ struct VersionSettings: Codable, Equatable, Sendable {
         try container.encode(spatializeStereo, forKey: .spatializeStereo)
         try container.encode(normalizeAudio, forKey: .normalizeAudio)
         try container.encode(portal, forKey: .portal)
+        try container.encode(textLocale, forKey: .textLocale)
+        try container.encode(audioLocale, forKey: .audioLocale)
     }
 
     func mergedWithDefaults(_ defaults: VersionSettings) -> VersionSettings {
