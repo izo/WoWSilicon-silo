@@ -374,10 +374,15 @@ final class MainDashboardViewModel: ObservableObject {
             version.executableName = url.lastPathComponent
         }
         // Non-blocking: an unknown architecture or a matching profile shows nothing.
-        if let kind,
-           let message = PEArchitecture.mismatchMessage(for: PEArchitecture.read(from: url), profileKind: kind) {
-            patchFeedback = PatchFeedback(title: "Executable Architecture", message: message, isError: true)
+        if let kind, let feedback = Self.architectureMismatchFeedback(for: url, profileKind: kind) {
+            patchFeedback = feedback
         }
+    }
+
+    /// Warning shown when the chosen executable does not match the profile family (32/64-bit).
+    static func architectureMismatchFeedback(for url: URL, profileKind: GameProfileKind) -> PatchFeedback? {
+        PEArchitecture.mismatchMessage(for: PEArchitecture.read(from: url), profileKind: profileKind)
+            .map { PatchFeedback(title: "Executable Architecture", message: $0, isError: true) }
     }
 
     var canOpenGameDirectory: Bool {
@@ -1078,7 +1083,6 @@ final class MainDashboardViewModel: ObservableObject {
                     && (previousValue.backend != normalizedValue.backend
                         || previousValue.vulkanDriver != normalizedValue.vulkanDriver)
                 let shouldInstallD3D9 = d3d9SelectionChanged
-                    && !version.isWorldOfWarcraftX64
                     && PatchingStatusChecker.evaluateGamePatch(for: version).applied
                 version.settings.graphicsSettings = normalizedValue
                 self.updateCurrentVersion { current in current = version }

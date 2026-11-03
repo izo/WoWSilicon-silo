@@ -260,20 +260,23 @@ enum PatchService {
         return urls
     }
 
+    /// True when the game folder holds a `d3d9.dll` byte-identical to one WoWSilicon ships.
+    static func hasEmbeddedD3D9DLL(in gameURL: URL) -> Bool {
+        let installed = gameURL.appendingPathComponent("d3d9.dll")
+        guard FileManager.default.fileExists(atPath: installed.path),
+              let installedData = try? Data(contentsOf: installed) else { return false }
+        return embeddedD3D9DLLURLs().contains { candidate in
+            (try? Data(contentsOf: candidate)) == installedData
+        }
+    }
+
     /// Deletes `d3d9.dll` from the game folder only when it is byte-identical to one WoWSilicon
     /// ships. A third-party d3d9.dll is left untouched. Returns whether a file was removed.
     @discardableResult
     static func removeEmbeddedD3D9DLL(in gameURL: URL) throws -> Bool {
-        let installed = gameURL.appendingPathComponent("d3d9.dll")
-        guard FileManager.default.fileExists(atPath: installed.path),
-              let installedData = try? Data(contentsOf: installed) else { return false }
-        for candidate in embeddedD3D9DLLURLs() {
-            if let data = try? Data(contentsOf: candidate), data == installedData {
-                try removeIfExists(installed)
-                return true
-            }
-        }
-        return false
+        guard hasEmbeddedD3D9DLL(in: gameURL) else { return false }
+        try removeIfExists(gameURL.appendingPathComponent("d3d9.dll"))
+        return true
     }
 
     // MARK: - Helpers

@@ -162,6 +162,49 @@ final class WorldOfWarcraftX64ProfileTests: XCTestCase {
         let version = try x64Version(gameDirectory: game)
         try PatchService.installD3D9DLL(for: version)
         XCTAssertFalse(FileManager.default.fileExists(atPath: game.appendingPathComponent("d3d9.dll").path))
+
+        // Existing third-party d3d9.dll is left byte for byte, whatever the graphics backend.
+        let thirdParty = game.appendingPathComponent("d3d9.dll")
+        try Data("third-party".utf8).write(to: thirdParty)
+        for backend in GraphicsBackend.allCases {
+            for driver in VulkanDriver.allCases {
+                var other = version
+                other.settings.graphicsSettings.backend = backend
+                other.settings.graphicsSettings.vulkanDriver = driver
+                try PatchService.installD3D9DLL(for: other)
+                XCTAssertEqual(try Data(contentsOf: thirdParty), Data("third-party".utf8))
+            }
+        }
+    }
+
+    func testStatusCheckerFlagsStaleEmbeddedD3D9DLL() throws {
+        let game = try makeTempDirectory()
+        let version = try x64Version(gameDirectory: game)
+
+        XCTAssertEqual(PatchingStatusChecker.evaluateGamePatch(for: version).text, "No patch needed")
+
+        // A third-party d3d9.dll is not ours: still "No patch needed".
+        let installed = game.appendingPathComponent("d3d9.dll")
+        try Data("third-party".utf8).write(to: installed)
+        XCTAssertEqual(PatchingStatusChecker.evaluateGamePatch(for: version).text, "No patch needed")
+
+        for driver in VulkanDriver.allCases {
+            let embedded = try XCTUnwrap(PatchService.resourceURL(
+                named: "d3d9",
+                extension: "dll",
+                subdirectory: PatchService.d3d9ResourceSubdirectory(for: driver)
+            ))
+            try? FileManager.default.removeItem(at: installed)
+            try FileManager.default.copyItem(at: embedded, to: installed)
+            let status = PatchingStatusChecker.evaluateGamePatch(for: version)
+            XCTAssertEqual(status.text, "Stale 32-bit d3d9.dll — click Unpatch to remove", "\(driver)")
+            XCTAssertEqual(status.level, .warning)
+            XCTAssertTrue(status.actionable)
+            XCTAssertTrue(status.applied, "must not block launch")
+        }
+
+        try PatchService.removeGamePatch(for: version)
+        XCTAssertEqual(PatchingStatusChecker.evaluateGamePatch(for: version).text, "No patch needed")
     }
 
     func testStatusCheckerConsidersX64Ready() throws {
@@ -250,6 +293,282 @@ final class WorldOfWarcraftX64ProfileTests: XCTestCase {
             XCTAssertFalse(script.contains("-d3d11"))
             XCTAssertFalse(script.contains("WINE_D3D_CONFIG"))
         }
+    }
+
+    // MARK: - Golden: 32-bit command strings unchanged vs main
+
+    /// Verbatim copy of `makeShellCommand` from `main` (LaunchService.swift before #44), with its
+    /// private helpers inlined. The 32-bit output of the current code must equal it exactly.
+    private func mainReferenceCommand(
+        gameURL: URL,
+        x87Runtime: BundledX87Runtime.ResolvedRuntime?,
+        wowURL: URL,
+        wineExecutablePath: String,
+        settings: VersionSettings
+    ) -> String {
+        let service = LaunchService.shared
+        let game = service.shellQuote(gameURL.path)
+        let wow = service.shellQuote(wowURL.path)
+        let wine = service.shellQuote(wineExecutablePath)
+
+        let mtlValue = settings.enableMetalHud ? "1" : "0"
+        let spatialAudioMode = settings.spatializeStereo ? "fixed" : "off"
+        let normalizeAudio = settings.normalizeAudio ? "1" : "0"
+        let outputDeviceOverride = settings.audioOutputDeviceID.isEmpty ? "" : " WOWSILICON_FOLLOW_SYSTEM_OUTPUT=0"
+        let inputDeviceOverride = settings.audioInputDeviceID.isEmpty ? "" : " WOWSILICON_FOLLOW_SYSTEM_INPUT=0"
+        let dllOverride = settings.graphicsSettings.backend.wineDLLOverride
+        let dyldLibraryPath = service.shellQuote(BundledWineRuntime.makeEnvironment()["DYLD_LIBRARY_PATH"] ?? "")
+        let winePrefix = BundledWineRuntime.shellEnvironmentAssignment(
+            key: "WINEPREFIX",
+            value: WineRegistrySupport.winePrefixURL().path
+        )
+        var vulkanDriver = ""
+        if settings.graphicsSettings.backend == .d9vk,
+           let assignment = BundledWineRuntime.vulkanDriverShellAssignment(for: settings.graphicsSettings.vulkanDriver) {
+            vulkanDriver = " \(assignment)"
+        }
+        let baseEnv = "\(winePrefix) DYLD_LIBRARY_PATH=\(dyldLibraryPath)\(vulkanDriver) WINE_LARGE_ADDRESS_AWARE=1 WINEDLLOVERRIDES=\(service.shellQuote(dllOverride))\(outputDeviceOverride)\(inputDeviceOverride) WOWSILICON_SPATIAL_AUDIO_MODE=\(spatialAudioMode) WOWSILICON_NORMALIZE_AUDIO=\(normalizeAudio) MTL_HUD_ENABLED=\(mtlValue) MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS=1 DXVK_ASYNC=1"
+        let custom = BundledWineRuntime.shellEnvironmentAssignments(settings.environmentVariables)
+        let envPart = custom.isEmpty ? baseEnv : "\(custom) \(baseEnv)"
+
+        if let x87Runtime {
+            let binary = service.shellQuote(x87Runtime.executableURL.path)
+            return "cd \(game) && \(x87Runtime.wineEnvironmentKey)=\(binary) \(envPart) \(wine) \(wow)"
+        } else {
+            return "cd \(game) && \(envPart) \(wine) \(wow)"
+        }
+    }
+
+    func testMakeShellCommandIsIdenticalToMainFor32BitProfiles() throws {
+        try withFakeWineRuntime { _ in
+            let game = URL(fileURLWithPath: "/Games/It's WoW 3.3.5", isDirectory: true)
+            let wow = game.appendingPathComponent("Wow.exe")
+            let wine = "/Applications/WoWSilicon.app/Contents/Resources/Wine/bin/wine"
+            let fakeX87 = BundledX87Runtime.ResolvedRuntime(
+                executableURL: URL(fileURLWithPath: "/fake/Patching/rosettax87/rosettax87"),
+                wineEnvironmentKey: "ROSETTA_X87_PATH"
+            )
+            let fakeSidecar = BundledX87Runtime.ResolvedRuntime(
+                executableURL: URL(fileURLWithPath: "/fake/Patching/x87sidecar/x87sidecar"),
+                wineEnvironmentKey: "X87_SIDECAR_PATH"
+            )
+
+            var cases: [(String, GameVersion, BundledX87Runtime.ResolvedRuntime?)] = []
+            for runtime in [nil, fakeX87, fakeSidecar] as [BundledX87Runtime.ResolvedRuntime?] {
+                cases.append(("wotlk", VersionManager.defaultVersions["wrathsilicon"]!, runtime))
+                cases.append(("generic", VersionManager.genericD3D9Template, runtime))
+            }
+
+            var checked = 0
+            for (label, base, runtime) in cases {
+                XCTAssertTrue(base.profileKind == .worldOfWarcraft || base.profileKind == .genericD3D9, label)
+                var variants: [VersionSettings] = []
+                for backend in GraphicsBackend.allCases {
+                    for driver in VulkanDriver.allCases {
+                        var settings = base.settings
+                        settings.graphicsSettings.backend = backend
+                        settings.graphicsSettings.vulkanDriver = driver
+                        variants.append(settings)
+                    }
+                }
+                var custom = base.settings
+                custom.environmentVariables = "B_VAR=2\nA_VAR='x y'"
+                custom.enableMetalHud = true
+                custom.spatializeStereo = true
+                custom.normalizeAudio = true
+                custom.audioOutputDeviceID = "out"
+                custom.audioInputDeviceID = "in"
+                variants.append(custom)
+
+                for settings in variants {
+                    let expected = mainReferenceCommand(
+                        gameURL: game, x87Runtime: runtime, wowURL: wow, wineExecutablePath: wine, settings: settings
+                    )
+                    let actual = LaunchService.shared.makeShellCommand(
+                        gameURL: game, x87Runtime: runtime, wowURL: wow, wineExecutablePath: wine,
+                        settings: settings, profileKind: base.profileKind
+                    )
+                    XCTAssertEqual(actual, expected, label)
+                    // Default profile kind (what main's signature implies) must also match.
+                    if base.profileKind == .worldOfWarcraft {
+                        XCTAssertEqual(
+                            LaunchService.shared.makeShellCommand(
+                                gameURL: game, x87Runtime: runtime, wowURL: wow, wineExecutablePath: wine, settings: settings
+                            ),
+                            expected
+                        )
+                    }
+                    checked += 1
+                }
+            }
+            XCTAssertEqual(checked, 3 * 2 * (GraphicsBackend.allCases.count * VulkanDriver.allCases.count + 1))
+        }
+    }
+
+    func testPrepareLaunchOutputForGenericMatchesMainReference() throws {
+        try withFakeWineRuntime { wineRoot in
+            let game = try makeTempDirectory()
+            let exe = game.appendingPathComponent("Wow.exe")
+            XCTAssertTrue(FileManager.default.createFile(atPath: exe.path, contents: makePEData(machine: 0x014C)))
+            let wine = wineRoot.appendingPathComponent("bin/wine").path
+            let prefix = try makeTempDirectory()
+
+            // Only the generic profile can be patched in a synthetic folder (WoW profiles need a real client);
+            // the WoW profile is covered by the direct makeShellCommand golden test above.
+            for var version in [VersionManager.genericD3D9Template] {
+                version.gamePath = exe.path
+                version.executableName = "Wow.exe"
+                version.settings.x87Backend = .disabled
+                try PatchService.applyGamePatch(for: version)
+
+                let script = try LaunchService.shared.shortcutShellScript(for: version, winePrefixURL: prefix)
+                let expected = mainReferenceCommand(
+                    gameURL: game, x87Runtime: nil, wowURL: exe, wineExecutablePath: wine, settings: version.settings
+                )
+                XCTAssertTrue(script.contains(expected), "\(version.profileKind): command differs from main")
+            }
+        }
+    }
+
+    // MARK: - Architecture mismatch feedback
+
+    @MainActor
+    func testGamePathFeedbackFlagsX64ExecutableOn32BitProfile() throws {
+        let dir = try makeTempDirectory()
+        let exe = dir.appendingPathComponent("Wow-64.exe")
+        XCTAssertTrue(FileManager.default.createFile(atPath: exe.path, contents: makePEData(machine: 0x8664)))
+        let x86 = dir.appendingPathComponent("Wow.exe")
+        XCTAssertTrue(FileManager.default.createFile(atPath: x86.path, contents: makePEData(machine: 0x014C)))
+
+        for kind in [GameProfileKind.worldOfWarcraft, .genericD3D9] {
+            let feedback = try XCTUnwrap(MainDashboardViewModel.architectureMismatchFeedback(for: exe, profileKind: kind))
+            XCTAssertTrue(feedback.isError)
+            XCTAssertTrue(feedback.message.contains("64-bit"))
+            XCTAssertTrue(feedback.message.contains("Battle for Azeroth 8.3.7 (x64)"))
+            XCTAssertNil(MainDashboardViewModel.architectureMismatchFeedback(for: x86, profileKind: kind))
+        }
+        XCTAssertNil(MainDashboardViewModel.architectureMismatchFeedback(for: exe, profileKind: .worldOfWarcraftX64))
+        XCTAssertNotNil(MainDashboardViewModel.architectureMismatchFeedback(for: x86, profileKind: .worldOfWarcraftX64))
+    }
+
+    // MARK: - Vulkan driver error message
+
+    func testVulkanDriverMissingMessageDependsOnDriver() {
+        let molten = LaunchServiceError.vulkanDriverMissing(.moltenVK).errorDescription ?? ""
+        XCTAssertTrue(molten.contains("MoltenVK"))
+        XCTAssertTrue(molten.contains("tools/wine-runtime/restore.sh"))
+        XCTAssertFalse(molten.contains("install-kosmickrisp.sh"))
+
+        let kosmic = LaunchServiceError.vulkanDriverMissing(.kosmicKrisp).errorDescription ?? ""
+        XCTAssertTrue(kosmic.contains(VulkanDriver.kosmicKrisp.displayName))
+        XCTAssertTrue(kosmic.contains("tools/wine-runtime/install-kosmickrisp.sh"))
+        XCTAssertFalse(kosmic.contains("restore.sh"))
+    }
+
+    func testX64LaunchReportsMissingMoltenVKDriver() throws {
+        try withFakeWineRuntime { wineRoot in
+            try FileManager.default.removeItem(
+                at: wineRoot.appendingPathComponent("lib/vulkan/icd.d/\(VulkanDriver.moltenVK.manifestFileName)")
+            )
+            let game = try makeTempDirectory()
+            let version = try x64Version(gameDirectory: game)
+            XCTAssertThrowsError(try LaunchService.shared.shortcutShellScript(for: version, winePrefixURL: try makeTempDirectory())) { error in
+                guard case LaunchServiceError.vulkanDriverMissing(.moltenVK) = error else {
+                    return XCTFail("unexpected error \(error)")
+                }
+            }
+        }
+    }
+
+    // MARK: - Wine prefix 64-bit capability
+
+    private func makePrefix(system32: Bool, syswow64: Bool, driveC: Bool = true) throws -> URL {
+        let prefix = try makeTempDirectory()
+        if driveC {
+            let windows = prefix.appendingPathComponent("drive_c/windows", isDirectory: true)
+            try FileManager.default.createDirectory(at: windows, withIntermediateDirectories: true)
+            if system32 { try FileManager.default.createDirectory(at: windows.appendingPathComponent("system32"), withIntermediateDirectories: true) }
+            if syswow64 { try FileManager.default.createDirectory(at: windows.appendingPathComponent("syswow64"), withIntermediateDirectories: true) }
+        }
+        return prefix
+    }
+
+    func testPrefixSupports64BitDetection() throws {
+        XCTAssertTrue(LaunchService.prefixSupports64Bit(at: try makePrefix(system32: true, syswow64: true)))
+        XCTAssertFalse(LaunchService.prefixSupports64Bit(at: try makePrefix(system32: true, syswow64: false)))
+        XCTAssertFalse(LaunchService.prefixSupports64Bit(at: try makePrefix(system32: false, syswow64: true)))
+        XCTAssertFalse(LaunchService.prefixSupports64Bit(at: try makePrefix(system32: false, syswow64: false)))
+        // No drive_c yet: Wine will create a 64-bit prefix at first launch.
+        XCTAssertTrue(LaunchService.prefixSupports64Bit(at: try makePrefix(system32: false, syswow64: false, driveC: false)))
+        XCTAssertTrue(LaunchService.prefixSupports64Bit(at: URL(fileURLWithPath: "/nonexistent/prefix")))
+    }
+
+    func testPrefixCheckDoesNotCreateOrModifyAnything() throws {
+        let prefix = try makePrefix(system32: true, syswow64: false)
+        func listing() -> [String] {
+            (FileManager.default.subpaths(atPath: prefix.path) ?? []).sorted()
+        }
+        let before = listing()
+        _ = LaunchService.prefixSupports64Bit(at: prefix)
+        XCTAssertEqual(listing(), before)
+    }
+
+    func testX64LaunchRefusesNon64BitPrefixOnly() throws {
+        try withFakeWineRuntime { _ in
+            let game = try makeTempDirectory()
+            let version = try x64Version(gameDirectory: game)
+
+            let bad = try makePrefix(system32: true, syswow64: false)
+            XCTAssertThrowsError(try LaunchService.shared.shortcutShellScript(for: version, winePrefixURL: bad)) { error in
+                guard case LaunchServiceError.winePrefixNot64BitCapable(let path) = error else {
+                    return XCTFail("unexpected error \(error)")
+                }
+                XCTAssertEqual(path, bad.path)
+                XCTAssertTrue(error.localizedDescription.contains("64-bit"))
+            }
+
+            let good = try makePrefix(system32: true, syswow64: true)
+            XCTAssertNoThrow(try LaunchService.shared.shortcutShellScript(for: version, winePrefixURL: good))
+
+            // 32-bit profiles are not subject to the check.
+            let exe = game.appendingPathComponent("Game.exe")
+            XCTAssertTrue(FileManager.default.createFile(atPath: exe.path, contents: makePEData(machine: 0x014C)))
+            var generic = VersionManager.genericD3D9Template
+            generic.gamePath = exe.path
+            generic.executableName = "Game.exe"
+            generic.settings.x87Backend = .disabled
+            try PatchService.applyGamePatch(for: generic)
+            XCTAssertNoThrow(try LaunchService.shared.shortcutShellScript(for: generic, winePrefixURL: bad))
+        }
+    }
+
+    func testPrefixDetectionOnRealAndReferencePrefixesIsReadOnly() throws {
+        // Optional smoke test on prefixes that exist on the developer machine; skipped elsewhere.
+        let candidates = [
+            WineRegistrySupport.winePrefixURL(),
+            URL(fileURLWithPath: "/private/tmp/claude-501/-Users-izo-Documents-GitHub-divers-WoWSilicon-silo/0cb7fe94-d175-4213-b599-6980babd60bc/scratchpad/prefix")
+        ].filter { FileManager.default.fileExists(atPath: $0.appendingPathComponent("drive_c/windows/system32").path) }
+        try XCTSkipIf(candidates.isEmpty, "no local Wine prefix")
+        for prefix in candidates {
+            XCTAssertTrue(LaunchService.prefixSupports64Bit(at: prefix), prefix.path)
+        }
+    }
+
+    // MARK: - Telemetry
+
+    func testTelemetryContextForX64ProfileIsExplicit() {
+        var x64 = VersionManager.bfa837X64Template
+        x64.settings.graphicsSettings.backend = .d9vk
+        x64.settings.x87Backend = .rosettaX87
+        let context = TelemetryEventContext(version: x64)
+        XCTAssertEqual(context.renderer, "wined3d-vulkan")
+        XCTAssertEqual(context.x87Translation, "disabled")
+        XCTAssertEqual(context.wowVersion, "8.3.7")
+
+        let wotlk = VersionManager.defaultVersions["wrathsilicon"]!
+        let legacy = TelemetryEventContext(version: wotlk)
+        XCTAssertEqual(legacy.renderer, wotlk.settings.graphicsSettings.backend.rawValue)
+        XCTAssertEqual(legacy.x87Translation, wotlk.settings.x87Backend.rawValue)
     }
 
     // MARK: - PEArchitecture

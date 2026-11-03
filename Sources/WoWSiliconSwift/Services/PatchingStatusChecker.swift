@@ -40,6 +40,16 @@ enum PatchingStatusChecker {
                     actionable: false
                 )
             }
+            // A 32-bit d3d9.dll we shipped must not sit next to a 64-bit client. Not blocking
+            // (launch is allowed); "Unpatch" removes it.
+            if let gameURL = version.gameDirectoryURL, PatchService.hasEmbeddedD3D9DLL(in: gameURL) {
+                return PatchStatusDescriptor(
+                    applied: true,
+                    text: "Stale 32-bit d3d9.dll — click Unpatch to remove",
+                    level: .warning,
+                    actionable: true
+                )
+            }
             // Nothing to patch. "Remove" stays available to clean a mistaken 32-bit d3d9.dll.
             return PatchStatusDescriptor(
                 applied: true,

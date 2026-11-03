@@ -43,7 +43,8 @@ enum LaunchServiceError: LocalizedError {
     case gamePathMissing
     case x87RuntimeMissing(String)
     case vulkanDriverUnsupported(String)
-    case vulkanDriverMissing(String)
+    case vulkanDriverMissing(VulkanDriver)
+    case winePrefixNot64BitCapable(String)
     case wineMissing(String)
     case executableMissing(String)
     case vanillaTweaksMissing
@@ -64,7 +65,14 @@ enum LaunchServiceError: LocalizedError {
         case .vulkanDriverUnsupported(let driver):
             return "\(driver) requires macOS 26 or later. Select MoltenVK in Graphics settings."
         case .vulkanDriverMissing(let driver):
-            return "The \(driver) Vulkan driver is not installed in this Wine runtime. Run tools/wine-runtime/install-kosmickrisp.sh and rebuild WoWSilicon."
+            switch driver {
+            case .moltenVK:
+                return "The MoltenVK Vulkan driver is missing from the bundled Wine runtime, so the runtime is incomplete. Restore it with tools/wine-runtime/restore.sh --runtime .wine-runtime and rebuild WoWSilicon."
+            case .kosmicKrisp:
+                return "The \(driver.displayName) Vulkan driver is not installed in this Wine runtime. Run tools/wine-runtime/install-kosmickrisp.sh and rebuild WoWSilicon."
+            }
+        case .winePrefixNot64BitCapable(let path):
+            return "The Wine prefix at \(path) cannot run 64-bit programs (system32 and syswow64 are not both present). It looks like a 32-bit prefix. Choose another Wine bottle in Options or recreate this one with the bundled Wine runtime, then try again."
         case .wineMissing(let path):
             return "Bundled Wine executable not found at \(path). Reinstall WoWSilicon and try again."
         case .executableMissing(let path):
@@ -177,7 +185,8 @@ final class LaunchService: @unchecked Sendable {
 
     private func prepareLaunchArtifacts(
         for version: GameVersion,
-        performPrelaunchActions: Bool = true
+        performPrelaunchActions: Bool = true,
+        winePrefixURL: URL = WineRegistrySupport.winePrefixURL()
     ) throws -> LaunchConfiguration {
         let trimmedGame = version.gamePath.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedGame.isEmpty, let gameURL = version.gameDirectoryURL else { throw LaunchServiceError.gamePathMissing }
@@ -201,7 +210,10 @@ final class LaunchService: @unchecked Sendable {
         if isX64 {
             // The x64 pipeline always runs on MoltenVK (KosmicKrisp closes the client).
             guard BundledWineRuntime.vulkanDriverManifestURL(for: .moltenVK) != nil else {
-                throw LaunchServiceError.vulkanDriverMissing(VulkanDriver.moltenVK.displayName)
+                throw LaunchServiceError.vulkanDriverMissing(.moltenVK)
+            }
+            guard Self.prefixSupports64Bit(at: winePrefixURL, fileManager: fileManager) else {
+                throw LaunchServiceError.winePrefixNot64BitCapable(winePrefixURL.path)
             }
         } else if version.settings.graphicsSettings.backend == .d9vk {
             let driver = version.settings.graphicsSettings.vulkanDriver
@@ -210,7 +222,7 @@ final class LaunchService: @unchecked Sendable {
             }
             if driver == .kosmicKrisp,
                BundledWineRuntime.vulkanDriverManifestURL(for: driver) == nil {
-                throw LaunchServiceError.vulkanDriverMissing(driver.displayName)
+                throw LaunchServiceError.vulkanDriverMissing(driver)
             }
         }
 
@@ -280,10 +292,32 @@ final class LaunchService: @unchecked Sendable {
         )
     }
 
-    func shortcutShellScript(for version: GameVersion) throws -> String {
+    /// A prefix runs 64-bit programs when Wine created it in WoW64 mode: both `system32`
+    /// (64-bit DLLs) and `syswow64` (32-bit DLLs) exist. A prefix that does not exist yet is
+    /// accepted, because Wine creates a 64-bit one at first launch. Read-only: never creates
+    /// or modifies a prefix.
+    static func prefixSupports64Bit(at prefixURL: URL, fileManager: FileManager = .default) -> Bool {
+        let windows = prefixURL.appendingPathComponent("drive_c/windows", isDirectory: true)
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: prefixURL.appendingPathComponent("drive_c").path, isDirectory: &isDirectory),
+              isDirectory.boolValue else { return true }
+        return ["system32", "syswow64"].allSatisfy { name in
+            var isDir: ObjCBool = false
+            return fileManager.fileExists(
+                atPath: windows.appendingPathComponent(name, isDirectory: true).path,
+                isDirectory: &isDir
+            ) && isDir.boolValue
+        }
+    }
+
+    func shortcutShellScript(
+        for version: GameVersion,
+        winePrefixURL: URL = WineRegistrySupport.winePrefixURL()
+    ) throws -> String {
         let configuration = try prepareLaunchArtifacts(
             for: version,
-            performPrelaunchActions: false
+            performPrelaunchActions: false,
+            winePrefixURL: winePrefixURL
         )
 
         guard patchesAppearValid(for: version) else {
@@ -670,7 +704,7 @@ final class LaunchService: @unchecked Sendable {
             }
             if driver == .kosmicKrisp,
                BundledWineRuntime.vulkanDriverManifestURL(for: driver) == nil {
-                completion(.failure(.vulkanDriverMissing(driver.displayName)))
+                completion(.failure(.vulkanDriverMissing(driver)))
                 return
             }
         }

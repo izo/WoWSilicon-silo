@@ -8,11 +8,19 @@ struct TelemetryEventContext: Sendable {
     let macOSVersion: String
     let realmlist: String?
 
+    static let x64Renderer = "wined3d-vulkan"
+
     init(version: GameVersion?) {
         appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? appVersionFallback
         wowVersion = (version?.isWorldOfWarcraft == true || version?.isWorldOfWarcraftX64 == true) ? version?.wowVersion : nil
-        renderer = version?.settings.graphicsSettings.backend.rawValue ?? GraphicsBackend.d9vk.rawValue
-        x87Translation = version?.settings.x87Backend.rawValue ?? X87Backend.rosettaX87.rawValue
+        if version?.isWorldOfWarcraftX64 == true {
+            // x64 clients run on wined3d over Vulkan with no x87 translation, whatever the profile says.
+            renderer = TelemetryEventContext.x64Renderer
+            x87Translation = X87Backend.disabled.rawValue
+        } else {
+            renderer = version?.settings.graphicsSettings.backend.rawValue ?? GraphicsBackend.d9vk.rawValue
+            x87Translation = version?.settings.x87Backend.rawValue ?? X87Backend.rosettaX87.rawValue
+        }
         macOSVersion = TelemetryEventContext.makeMacOSVersion()
         if version?.supportsRealmlist == true, let gamePath = version?.gamePath {
             realmlist = RealmlistService.currentRealmValue(gamePath: gamePath)
