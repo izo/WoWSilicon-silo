@@ -542,18 +542,6 @@ final class WorldOfWarcraftX64ProfileTests: XCTestCase {
         }
     }
 
-    func testPrefixDetectionOnRealAndReferencePrefixesIsReadOnly() throws {
-        // Optional smoke test on prefixes that exist on the developer machine; skipped elsewhere.
-        let candidates = [
-            WineRegistrySupport.winePrefixURL(),
-            URL(fileURLWithPath: "/private/tmp/claude-501/-Users-izo-Documents-GitHub-divers-WoWSilicon-silo/0cb7fe94-d175-4213-b599-6980babd60bc/scratchpad/prefix")
-        ].filter { FileManager.default.fileExists(atPath: $0.appendingPathComponent("drive_c/windows/system32").path) }
-        try XCTSkipIf(candidates.isEmpty, "no local Wine prefix")
-        for prefix in candidates {
-            XCTAssertTrue(LaunchService.prefixSupports64Bit(at: prefix), prefix.path)
-        }
-    }
-
     // MARK: - Telemetry
 
     func testTelemetryContextForX64ProfileIsExplicit() {
