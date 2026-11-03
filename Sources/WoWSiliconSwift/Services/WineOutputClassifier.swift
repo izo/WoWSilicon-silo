@@ -35,13 +35,26 @@ enum WineOutputClassifier {
     /// A run that fails faster than this without a known cause is reported as a startup failure.
     static let startupWindow: TimeInterval = 10
 
+    /// Lines Wine prints when it cannot load GnuTLS, whatever the exit code that follows.
+    static let tlsMarkers = ["Failed to load libgnutls", "no schannel support"]
+
+    static func indicatesMissingTLS(_ text: String) -> Bool {
+        tlsMarkers.contains { text.range(of: $0, options: .caseInsensitive) != nil }
+    }
+
     /// Returns nil for a normal exit and for a non-zero exit after a long session with no known cause.
+    /// A clean exit (code 0) is still reported when GnuTLS was missing: the client can close itself
+    /// after the login failed. A death by signal (`bySignal`, `exitCode` is the signal number) is only
+    /// reported for a known cause, since a user force-quitting Wine also ends that way.
     static func classify(
         exitCode: Int32,
         duration: TimeInterval,
-        outputTail: String
+        outputTail: String,
+        bySignal: Bool = false
     ) -> WineLaunchFailure? {
-        guard exitCode != 0 else { return nil }
+        if exitCode == 0, !bySignal {
+            return indicatesMissingTLS(outputTail) ? .tlsLibraryMissing : nil
+        }
 
         let text = outputTail
         func has(_ needles: String...) -> Bool {
@@ -58,13 +71,44 @@ enum WineOutputClassifier {
         // Root cause first: without GnuTLS the login fails or the client dies right after.
         // The FreeType warning ("Wine cannot find the FreeType font library") is deliberately not
         // matched: Wine on macOS falls back to CoreText fonts and prints it on healthy runs too.
-        if has("Failed to load libgnutls", "no schannel support") { return .tlsLibraryMissing }
+        if indicatesMissingTLS(text) { return .tlsLibraryMissing }
         // The WoW client's own crash handler (before Wine's generic unhandled exception).
         if has("ERROR #132", "Fatal exception!") { return .clientCrashed }
         if has("Unhandled exception", "page fault on") { return .unhandledException }
 
-        if duration < startupWindow { return .exitedAtStartup(code: exitCode) }
+        if !bySignal, duration < startupWindow { return .exitedAtStartup(code: exitCode) }
         return nil
+    }
+}
+
+/// Spots the GnuTLS failure line as the output streams in, independently of the bounded tail
+/// (which can drop a line written at startup). Reports it once per launch, even if it comes back
+/// and even if a marker is split between two chunks.
+final class TLSFailureWatcher: @unchecked Sendable {
+    private let lock = NSLock()
+    private var carry = ""
+    private var fired = false
+    private let carryLength = (WineOutputClassifier.tlsMarkers.map(\.count).max() ?? 0) - 1
+
+    /// True only the first time a marker is seen.
+    func consume(_ chunk: String) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !fired else { return false }
+        let window = carry + chunk
+        if WineOutputClassifier.indicatesMissingTLS(window) {
+            fired = true
+            carry = ""
+            return true
+        }
+        carry = String(window.suffix(max(carryLength, 0)))
+        return false
+    }
+
+    var hasFired: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return fired
     }
 }
 

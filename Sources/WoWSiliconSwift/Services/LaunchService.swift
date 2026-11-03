@@ -400,6 +400,14 @@ final class LaunchService: @unchecked Sendable {
         process.standardError = stderr
 
         let capture = WineOutputCapture(logURL: WineOutputCapture.defaultLogURL(profileID: configuration.version.id))
+        let tlsWatcher = TLSFailureWatcher()
+        // Reports the GnuTLS failure right away (once): the client may stay open on the login screen,
+        // so waiting for the process to end would show nothing.
+        let reportTLSFailure: @Sendable (String) -> Void = { [weak self] text in
+            guard tlsWatcher.consume(text) else { return }
+            let error = LaunchServiceError.wineProcessFailed(.tlsLibraryMissing, logPath: capture.logURL?.path)
+            DispatchQueue.main.async { self?.processDidFail?(error) }
+        }
         stdout.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             guard !data.isEmpty else {
@@ -407,6 +415,7 @@ final class LaunchService: @unchecked Sendable {
                 return
             }
             capture.append(data, stream: "stdout")
+            reportTLSFailure(String(decoding: data, as: UTF8.self))
             if let text = String(data: data, encoding: .utf8), !text.isEmpty {
                 print("[GAME]", text)
             }
@@ -418,6 +427,7 @@ final class LaunchService: @unchecked Sendable {
                 return
             }
             capture.append(data, stream: "stderr")
+            reportTLSFailure(String(decoding: data, as: UTF8.self))
             if let text = String(data: data, encoding: .utf8), !text.isEmpty {
                 print("[GAME:ERR]", text)
             }
@@ -428,16 +438,24 @@ final class LaunchService: @unchecked Sendable {
             stdout.fileHandleForReading.readabilityHandler = nil
             stderr.fileHandleForReading.readabilityHandler = nil
             // Drain what the handlers had not read yet before classifying.
-            if let rest = try? stdout.fileHandleForReading.readToEnd() { capture.append(rest, stream: "stdout") }
-            if let rest = try? stderr.fileHandleForReading.readToEnd() { capture.append(rest, stream: "stderr") }
+            if let rest = try? stdout.fileHandleForReading.readToEnd() {
+                capture.append(rest, stream: "stdout")
+                reportTLSFailure(String(decoding: rest, as: UTF8.self))
+            }
+            if let rest = try? stderr.fileHandleForReading.readToEnd() {
+                capture.append(rest, stream: "stderr")
+                reportTLSFailure(String(decoding: rest, as: UTF8.self))
+            }
             capture.close()
-            let failure: LaunchServiceError? = finished.terminationReason == .exit
-                ? WineOutputClassifier.classify(
-                    exitCode: finished.terminationStatus,
-                    duration: Date().timeIntervalSince(startedAt),
-                    outputTail: capture.tailText
-                ).map { .wineProcessFailed($0, logPath: capture.logURL?.path) }
-                : nil
+            var classified = WineOutputClassifier.classify(
+                exitCode: finished.terminationStatus,
+                duration: Date().timeIntervalSince(startedAt),
+                outputTail: capture.tailText,
+                bySignal: finished.terminationReason == .uncaughtSignal
+            )
+            // Already shown while the game was running: do not show it a second time.
+            if classified == .tlsLibraryMissing, tlsWatcher.hasFired { classified = nil }
+            let failure = classified.map { LaunchServiceError.wineProcessFailed($0, logPath: capture.logURL?.path) }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.cancelWineApplicationFocusObservation(id: focusID)

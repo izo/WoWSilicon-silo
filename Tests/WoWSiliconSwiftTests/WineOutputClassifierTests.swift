@@ -48,7 +48,7 @@ final class WineOutputClassifierTests: XCTestCase {
         0024:err:secur32:SECUR32_initSchannelSP no schannel support, expect problems
         """
         XCTAssertEqual(WineOutputClassifier.classify(exitCode: 1, duration: 600, outputTail: out), .tlsLibraryMissing)
-        XCTAssertNil(WineOutputClassifier.classify(exitCode: 0, duration: 600, outputTail: out))
+        XCTAssertEqual(WineOutputClassifier.classify(exitCode: 0, duration: 600, outputTail: out), .tlsLibraryMissing)
         let message = WineLaunchFailure.tlsLibraryMissing.userMessage(logPath: nil)
         XCTAssertTrue(message.contains("libgnutls") && message.contains("validate.sh"))
     }
@@ -122,5 +122,49 @@ final class WineOutputClassifierTests: XCTestCase {
         XCTAssertTrue(full.contains("line 499\n"))
         XCTAssertFalse(capture.tailText.contains("line 0\n"))
         XCTAssertTrue(capture.tailText.contains("line 499"))
+    }
+
+    func testGnuTLSIsReportedEvenWhenTheClientExitsCleanly() {
+        let out = "err:winediag:SECUR32_initSchannelSP Failed to load libgnutls, secure connections will not be available.\n"
+        XCTAssertEqual(WineOutputClassifier.classify(exitCode: 0, duration: 600, outputTail: out), .tlsLibraryMissing)
+        XCTAssertNil(WineOutputClassifier.classify(exitCode: 0, duration: 600, outputTail: "all fine"))
+    }
+
+    func testDeathBySignalIsClassifiedOnlyForKnownCauses() {
+        XCTAssertEqual(
+            WineOutputClassifier.classify(exitCode: 11, duration: 300, outputTail: "ERROR #132 (0x85100084) Fatal exception!", bySignal: true),
+            .clientCrashed
+        )
+        XCTAssertEqual(
+            WineOutputClassifier.classify(exitCode: 6, duration: 300, outputTail: "no schannel support", bySignal: true),
+            .tlsLibraryMissing
+        )
+        // A quick force-quit (SIGTERM) with no known cause must stay silent.
+        XCTAssertNil(WineOutputClassifier.classify(exitCode: 15, duration: 1, outputTail: "", bySignal: true))
+    }
+
+    func testTLSWatcherFiresOnceEvenWhenTheLineComesBackOrIsSplit() {
+        let watcher = TLSFailureWatcher()
+        XCTAssertFalse(watcher.consume("some noise\n"))
+        XCTAssertFalse(watcher.consume("err: Failed to load lib"))
+        XCTAssertTrue(watcher.consume("gnutls, secure connections off\n"))
+        XCTAssertFalse(watcher.consume("Failed to load libgnutls again\n"))
+        XCTAssertFalse(watcher.consume("no schannel support\n"))
+        XCTAssertTrue(watcher.hasFired)
+    }
+
+    func testTLSWatcherDoesNotDependOnTheBoundedTail() {
+        let watcher = TLSFailureWatcher()
+        var tail = BoundedOutputTail()
+        let first = "Failed to load libgnutls\n"
+        tail.append(first)
+        XCTAssertTrue(watcher.consume(first))
+        for i in 0..<500 {
+            let line = "line \(i)\n"
+            tail.append(line)
+            XCTAssertFalse(watcher.consume(line))
+        }
+        XCTAssertFalse(tail.text.contains("libgnutls"))
+        XCTAssertTrue(watcher.hasFired)
     }
 }
