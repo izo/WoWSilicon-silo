@@ -54,6 +54,7 @@ enum LaunchServiceError: LocalizedError {
     case appleScriptFailed(String)
     case versionMismatch(String, String)
     case unsupportedProfileKind(String)
+    case wineProcessFailed(WineLaunchFailure, logPath: String?)
 
     var errorDescription: String? {
         switch self {
@@ -90,6 +91,8 @@ enum LaunchServiceError: LocalizedError {
             return "Failed to launch in Terminal: \(reason)"
         case .unsupportedProfileKind(let kind):
             return "This profile uses the type \"\(kind)\", which this version of SiloWow does not know. The profile is kept as is, but it cannot be launched. Update SiloWow to use it."
+        case .wineProcessFailed(let failure, let logPath):
+            return failure.userMessage(logPath: logPath)
         case .versionMismatch(let base, let tweaked):
             return "Build mismatch detected.\n\nWoW.exe: \(base)\nWoW_tweaked.exe: \(tweaked)\n\nWoWSilicon can re-generate the tweaked executable for you."
         }
@@ -100,6 +103,8 @@ final class LaunchService: @unchecked Sendable {
     static let shared = LaunchService()
 
     var processDidTerminate: (() -> Void)?
+    /// Called on the main queue when an integrated launch dies with a known or startup failure.
+    var processDidFail: ((LaunchServiceError) -> Void)?
 
     private var runningProcesses: [Process] = []
     private let processQueue = DispatchQueue(label: "com.turtlesilicon.launchservice.processes")
@@ -390,12 +395,14 @@ final class LaunchService: @unchecked Sendable {
         process.standardOutput = stdout
         process.standardError = stderr
 
+        let capture = WineOutputCapture(logURL: WineOutputCapture.defaultLogURL(profileID: configuration.version.id))
         stdout.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             guard !data.isEmpty else {
                 handle.readabilityHandler = nil
                 return
             }
+            capture.append(data, stream: "stdout")
             if let text = String(data: data, encoding: .utf8), !text.isEmpty {
                 print("[GAME]", text)
             }
@@ -406,18 +413,32 @@ final class LaunchService: @unchecked Sendable {
                 handle.readabilityHandler = nil
                 return
             }
+            capture.append(data, stream: "stderr")
             if let text = String(data: data, encoding: .utf8), !text.isEmpty {
                 print("[GAME:ERR]", text)
             }
         }
 
-        process.terminationHandler = { [weak self] _ in
+        let startedAt = Date()
+        process.terminationHandler = { [weak self] finished in
             stdout.fileHandleForReading.readabilityHandler = nil
             stderr.fileHandleForReading.readabilityHandler = nil
+            // Drain what the handlers had not read yet before classifying.
+            if let rest = try? stdout.fileHandleForReading.readToEnd() { capture.append(rest, stream: "stdout") }
+            if let rest = try? stderr.fileHandleForReading.readToEnd() { capture.append(rest, stream: "stderr") }
+            capture.close()
+            let failure: LaunchServiceError? = finished.terminationReason == .exit
+                ? WineOutputClassifier.classify(
+                    exitCode: finished.terminationStatus,
+                    duration: Date().timeIntervalSince(startedAt),
+                    outputTail: capture.tailText
+                ).map { .wineProcessFailed($0, logPath: capture.logURL?.path) }
+                : nil
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.cancelWineApplicationFocusObservation(id: focusID)
                 self.untrackProcess(process)
+                if let failure { self.processDidFail?(failure) }
                 self.processDidTerminate?()
             }
         }

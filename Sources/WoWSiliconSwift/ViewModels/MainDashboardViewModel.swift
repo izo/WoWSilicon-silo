@@ -751,6 +751,13 @@ final class MainDashboardViewModel: ObservableObject {
             guard let self else { return }
             self.refreshSnapshot()
         }
+        launchService.processDidFail = { [weak self] error in
+            self?.patchFeedback = PatchFeedback(
+                title: "Game Stopped",
+                message: error.localizedDescription,
+                isError: true
+            )
+        }
     }
 
     private func completePreparedLaunch(_ currentVersion: GameVersion) async {
