@@ -182,8 +182,11 @@ final class LaunchService: @unchecked Sendable {
         let trimmedGame = version.gamePath.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedGame.isEmpty, let gameURL = version.gameDirectoryURL else { throw LaunchServiceError.gamePathMissing }
 
-        let x87Runtime = BundledX87Runtime.resolve(version.settings.x87Backend)
-        if version.settings.x87Backend != .disabled && x87Runtime == nil {
+        let isX64 = version.isWorldOfWarcraftX64
+        // x64 clients never use x87 translation, whatever the profile settings say.
+        let x87Backend: X87Backend = isX64 ? .disabled : version.settings.x87Backend
+        let x87Runtime = BundledX87Runtime.resolve(x87Backend)
+        if x87Backend != .disabled && x87Runtime == nil {
             throw LaunchServiceError.x87RuntimeMissing(
                 BundledX87Runtime.expectedBundlePath(for: version.settings.x87Backend)
             )
@@ -195,7 +198,12 @@ final class LaunchService: @unchecked Sendable {
             throw LaunchServiceError.wineMissing(expectedPath)
         }
 
-        if version.settings.graphicsSettings.backend == .d9vk {
+        if isX64 {
+            // The x64 pipeline always runs on MoltenVK (KosmicKrisp closes the client).
+            guard BundledWineRuntime.vulkanDriverManifestURL(for: .moltenVK) != nil else {
+                throw LaunchServiceError.vulkanDriverMissing(VulkanDriver.moltenVK.displayName)
+            }
+        } else if version.settings.graphicsSettings.backend == .d9vk {
             let driver = version.settings.graphicsSettings.vulkanDriver
             guard driver.isSupportedOnCurrentMacOS else {
                 throw LaunchServiceError.vulkanDriverUnsupported(driver.displayName)
@@ -258,7 +266,8 @@ final class LaunchService: @unchecked Sendable {
             x87Runtime: x87Runtime,
             wowURL: wowExecutableURL,
             wineExecutablePath: wineExecutableURL.path,
-            settings: version.settings
+            settings: version.settings,
+            profileKind: version.profileKind
         )
 
         return LaunchConfiguration(
@@ -456,10 +465,21 @@ final class LaunchService: @unchecked Sendable {
             + "(exit $_wowsilicon_status)"
     }
 
-    private func makeShellCommand(gameURL: URL, x87Runtime: BundledX87Runtime.ResolvedRuntime?, wowURL: URL, wineExecutablePath: String, settings: VersionSettings) -> String {
+    func makeShellCommand(
+        gameURL: URL,
+        x87Runtime: BundledX87Runtime.ResolvedRuntime?,
+        wowURL: URL,
+        wineExecutablePath: String,
+        settings: VersionSettings,
+        profileKind: GameProfileKind = .worldOfWarcraft
+    ) -> String {
         let game = shellQuote(gameURL.path)
         let wow = shellQuote(wowURL.path)
         let wine = shellQuote(wineExecutablePath)
+
+        if profileKind == .worldOfWarcraftX64 {
+            return makeX64ShellCommand(game: game, wow: wow, wine: wine, settings: settings)
+        }
 
         let mtlValue = settings.enableMetalHud ? "1" : "0"
         let spatialAudioMode = settings.spatializeStereo ? "fixed" : "off"
@@ -483,6 +503,27 @@ final class LaunchService: @unchecked Sendable {
         } else {
             return "cd \(game) && \(envPart) \(wine) \(wow)"
         }
+    }
+
+    /// Configuration proven by the BfA 8.3.7 spike: wined3d on MoltenVK, no DLL override, no x87,
+    /// and the client's `-d3d11` argument. Nothing from the 32-bit pipeline is carried over.
+    private func makeX64ShellCommand(game: String, wow: String, wine: String, settings: VersionSettings) -> String {
+        let mtlValue = settings.enableMetalHud ? "1" : "0"
+        let spatialAudioMode = settings.spatializeStereo ? "fixed" : "off"
+        let normalizeAudio = settings.normalizeAudio ? "1" : "0"
+        let outputDeviceOverride = settings.audioOutputDeviceID.isEmpty ? "" : " WOWSILICON_FOLLOW_SYSTEM_OUTPUT=0"
+        let inputDeviceOverride = settings.audioInputDeviceID.isEmpty ? "" : " WOWSILICON_FOLLOW_SYSTEM_INPUT=0"
+        let dyldLibraryPath = shellQuote(BundledWineRuntime.makeEnvironment()["DYLD_LIBRARY_PATH"] ?? "")
+        let winePrefix = BundledWineRuntime.shellEnvironmentAssignment(
+            key: "WINEPREFIX",
+            value: WineRegistrySupport.winePrefixURL().path
+        )
+        let vulkanDriver = BundledWineRuntime.vulkanDriverShellAssignment(for: .moltenVK)
+            .map { " \($0)" } ?? ""
+        let baseEnv = "\(winePrefix) DYLD_LIBRARY_PATH=\(dyldLibraryPath)\(vulkanDriver) WINE_D3D_CONFIG=renderer=vulkan\(outputDeviceOverride)\(inputDeviceOverride) WOWSILICON_SPATIAL_AUDIO_MODE=\(spatialAudioMode) WOWSILICON_NORMALIZE_AUDIO=\(normalizeAudio) MTL_HUD_ENABLED=\(mtlValue)"
+        let custom = BundledWineRuntime.shellEnvironmentAssignments(settings.environmentVariables)
+        let envPart = custom.isEmpty ? baseEnv : "\(custom) \(baseEnv)"
+        return "cd \(game) && \(envPart) \(wine) \(wow) -d3d11"
     }
 
     func shellQuote(_ value: String) -> String {

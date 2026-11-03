@@ -419,6 +419,8 @@ enum OptimizationLevel: String, Codable, Sendable {
 enum GameProfileKind: String, Codable, Sendable {
     case worldOfWarcraft = "world_of_warcraft"
     case genericD3D9 = "generic_d3d9"
+    /// 64-bit WoW client (BfA 8.x): no 32-bit patch DLLs, no x87, wined3d Vulkan renderer.
+    case worldOfWarcraftX64 = "world_of_warcraft_x64"
 }
 
 struct GameVersion: Codable, Identifiable, Equatable, Sendable {
@@ -437,8 +439,13 @@ struct GameVersion: Codable, Identifiable, Equatable, Sendable {
     var wantsLauncher: Bool
 
     var hasLauncher: Bool { !launcherExePath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    /// True only for the 32-bit WoW client families (1.12 / 2.4.3 / 3.3.5). The x64 profile is
+    /// deliberately excluded: it shares none of their patching, realmlist or graphics pipeline.
     var isWorldOfWarcraft: Bool { profileKind == .worldOfWarcraft }
-    var supportsAddons: Bool { isWorldOfWarcraft }
+    var isWorldOfWarcraftX64: Bool { profileKind == .worldOfWarcraftX64 }
+    /// AddonService only reads `Interface/AddOns` and is independent of the client version.
+    var supportsAddons: Bool { isWorldOfWarcraft || isWorldOfWarcraftX64 }
+    /// The 3.3.5 `realmlist.wtf` format does not apply to 8.x clients.
     var supportsRealmlist: Bool { isWorldOfWarcraft }
     var supportsCustomGraphicsSettings: Bool { isWorldOfWarcraft }
 
@@ -638,6 +645,25 @@ struct VersionManager: Codable, Sendable {
         )
     ]
 
+    static let bfa837X64TemplateID = "bfa837x64"
+
+    /// Not part of `defaultVersions`: like the generic template, it is only created on demand.
+    static let bfa837X64Template = GameVersion(
+        id: bfa837X64TemplateID,
+        displayName: "Battle for Azeroth 8.3.7 (x64)",
+        profileKind: .worldOfWarcraftX64,
+        wowVersion: "8.3.7",
+        executableName: "Wow.exe",
+        supportsVanillaTweaks: false,
+        supportsDLLLoading: false,
+        usesRosettaPatching: false,
+        settings: VersionSettings(
+            autoDeleteWdb: false,
+            enableLibSiliconPatch: false,
+            x87Backend: .disabled
+        )
+    )
+
     static let genericD3D9Template = GameVersion(
         id: genericD3D9TemplateID,
         displayName: "Non-WoW game (32-bit D3D9)",
@@ -653,6 +679,7 @@ struct VersionManager: Codable, Sendable {
     static var profileTemplates: [String: GameVersion] {
         var templates = defaultVersions
         templates[genericD3D9TemplateID] = genericD3D9Template
+        templates[bfa837X64TemplateID] = bfa837X64Template
         return templates
     }
 

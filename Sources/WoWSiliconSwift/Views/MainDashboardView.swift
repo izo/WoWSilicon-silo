@@ -44,7 +44,9 @@ struct MainDashboardView: View {
 
                 MainContentView(
                     gamePathLabel: viewModel.currentVersion?.isWorldOfWarcraft == false ? "Executable:" : "Game Path:",
-                    gamePatchLabel: viewModel.currentVersion?.isWorldOfWarcraft == false ? "D3D9 Patch:" : "Game Patch:",
+                    gamePatchLabel: viewModel.currentVersion?.isWorldOfWarcraftX64 == true
+                        ? "Client Check:"
+                        : (viewModel.currentVersion?.isWorldOfWarcraft == false ? "D3D9 Patch:" : "Game Patch:"),
                     gameStatus: viewModel.gamePathStatus,
                     gamePatchStatus: viewModel.gamePatchStatus,
                     onSelectGamePath: viewModel.selectGamePath,
@@ -717,8 +719,14 @@ private struct AddVersionSheet: View {
         ("vanillasilicon", "VanillaSilicon (1.12.1)"),
         ("burningsilicon", "BurningSilicon (2.4.3)"),
         ("wrathsilicon", "WrathSilicon (3.3.5a)"),
+        (VersionManager.bfa837X64TemplateID, "Battle for Azeroth 8.3.7 (x64)"),
         (VersionManager.genericD3D9TemplateID, "Non-WoW game (32-bit D3D9)")
     ]
+
+    private var isStandaloneTemplate: Bool {
+        selectedBaseID == VersionManager.genericD3D9TemplateID
+            || selectedBaseID == VersionManager.bfa837X64TemplateID
+    }
 
     @State private var customName: String = ""
     @State private var selectedBaseID: String = "vanillasilicon"
@@ -754,9 +762,15 @@ private struct AddVersionSheet: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                if selectedBaseID == VersionManager.bfa837X64TemplateID {
+                    Text("For 64-bit World of Warcraft 8.3.7 clients. Select the client's .exe (for example WoW Circle.exe) after creating the profile.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
-            if selectedBaseID != VersionManager.genericD3D9TemplateID {
+            if !isStandaloneTemplate {
                 Divider()
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -779,7 +793,7 @@ private struct AddVersionSheet: View {
                     onAdd(
                         name,
                         selectedBaseID,
-                        selectedBaseID == VersionManager.genericD3D9TemplateID ? false : useLauncher
+                        isStandaloneTemplate ? false : useLauncher
                     )
                 }
                 .keyboardShortcut(.defaultAction)

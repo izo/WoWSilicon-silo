@@ -343,7 +343,7 @@ enum TroubleshootingService {
         if let version = context.currentVersion {
             baseLog += "Current Game Version: \(version.displayName) (\(version.id))\n"
             baseLog += "Profile Type: \(version.profileKind.rawValue)\n"
-            if version.isWorldOfWarcraft {
+            if version.isWorldOfWarcraft || version.isWorldOfWarcraftX64 {
                 baseLog += "WoW Version: \(version.wowVersion)\n"
             }
             baseLog += "Game Path: \(version.gamePath)\n"

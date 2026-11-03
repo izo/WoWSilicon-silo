@@ -10,7 +10,7 @@ struct TelemetryEventContext: Sendable {
 
     init(version: GameVersion?) {
         appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? appVersionFallback
-        wowVersion = version?.isWorldOfWarcraft == true ? version?.wowVersion : nil
+        wowVersion = (version?.isWorldOfWarcraft == true || version?.isWorldOfWarcraftX64 == true) ? version?.wowVersion : nil
         renderer = version?.settings.graphicsSettings.backend.rawValue ?? GraphicsBackend.d9vk.rawValue
         x87Translation = version?.settings.x87Backend.rawValue ?? X87Backend.rosettaX87.rawValue
         macOSVersion = TelemetryEventContext.makeMacOSVersion()

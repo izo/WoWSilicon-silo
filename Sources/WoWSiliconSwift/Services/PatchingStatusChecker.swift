@@ -30,6 +30,25 @@ enum PatchingStatusChecker {
             )
         }
 
+        if version.isWorldOfWarcraftX64 {
+            guard let executableURL = version.gameExecutableURL,
+                  fileExists(at: executableURL) else {
+                return PatchStatusDescriptor(
+                    applied: false,
+                    text: "Executable missing",
+                    level: .error,
+                    actionable: false
+                )
+            }
+            // Nothing to patch. "Remove" stays available to clean a mistaken 32-bit d3d9.dll.
+            return PatchStatusDescriptor(
+                applied: true,
+                text: "No patch needed",
+                level: .success,
+                actionable: true
+            )
+        }
+
         if version.profileKind == .genericD3D9 {
             guard let executableURL = version.gameExecutableURL,
                   fileExists(at: executableURL) else {

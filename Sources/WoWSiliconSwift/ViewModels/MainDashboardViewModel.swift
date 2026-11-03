@@ -368,9 +368,15 @@ final class MainDashboardViewModel: ObservableObject {
     }
 
     func setGamePath(_ url: URL) {
+        let kind = versionManager.currentVersion?.profileKind
         updateCurrentVersion { version in
             version.gamePath = url.path
             version.executableName = url.lastPathComponent
+        }
+        // Non-blocking: an unknown architecture or a matching profile shows nothing.
+        if let kind,
+           let message = PEArchitecture.mismatchMessage(for: PEArchitecture.read(from: url), profileKind: kind) {
+            patchFeedback = PatchFeedback(title: "Executable Architecture", message: message, isError: true)
         }
     }
 
@@ -1072,6 +1078,7 @@ final class MainDashboardViewModel: ObservableObject {
                     && (previousValue.backend != normalizedValue.backend
                         || previousValue.vulkanDriver != normalizedValue.vulkanDriver)
                 let shouldInstallD3D9 = d3d9SelectionChanged
+                    && !version.isWorldOfWarcraftX64
                     && PatchingStatusChecker.evaluateGamePatch(for: version).applied
                 version.settings.graphicsSettings = normalizedValue
                 self.updateCurrentVersion { current in current = version }
@@ -1505,9 +1512,13 @@ final class MainDashboardViewModel: ObservableObject {
         currentVersion = syncCursorSizeMultiplierFromConfig(for: currentVersion)
 
         versionDisplayName = currentVersion.displayName
-        subtitleText = currentVersion.isWorldOfWarcraft
-            ? "Launch World Of Warcraft from 2006-2010 on Apple Silicon Macs"
-            : "Launch a 32-bit Direct3D 9 game on Apple Silicon"
+        if currentVersion.isWorldOfWarcraft {
+            subtitleText = "Launch World Of Warcraft from 2006-2010 on Apple Silicon Macs"
+        } else if currentVersion.isWorldOfWarcraftX64 {
+            subtitleText = "Launch a 64-bit World Of Warcraft client (Battle for Azeroth) on Apple Silicon"
+        } else {
+            subtitleText = "Launch a 32-bit Direct3D 9 game on Apple Silicon"
+        }
         self.currentVersion = currentVersion
         supportsAddons = currentVersion.supportsAddons
         supportsMods = currentVersion.isWorldOfWarcraft && currentVersion.supportsDLLLoading

@@ -35,6 +35,11 @@ enum PatchService {
         }
 
         try ensureDirectoryExists(gameURL, errorOnMissing: .invalidGamePath(version.gamePath))
+        if version.isWorldOfWarcraftX64 {
+            // Nothing to install for a 64-bit client; only undo a mistaken 32-bit d3d9.dll copy.
+            try removeEmbeddedD3D9DLL(in: gameURL)
+            return
+        }
         if version.profileKind == .genericD3D9 {
             try installD3D9DLL(for: version)
             return
@@ -191,6 +196,8 @@ enum PatchService {
     }
 
     static func installD3D9DLL(for version: GameVersion) throws {
+        // Never copy a 32-bit d3d9.dll next to a 64-bit client.
+        guard !version.isWorldOfWarcraftX64 else { return }
         guard let gameURL = version.gameDirectoryURL else {
             throw PatchServiceError.gamePathMissing
         }
@@ -213,6 +220,11 @@ enum PatchService {
 
         try ensureDirectoryExists(gameURL, errorOnMissing: .invalidGamePath(version.gamePath))
 
+        if version.isWorldOfWarcraftX64 {
+            try removeEmbeddedD3D9DLL(in: gameURL)
+            return
+        }
+
         if version.profileKind == .genericD3D9 {
             try removeIfExists(gameURL.appendingPathComponent("d3d9.dll"))
             return
@@ -233,6 +245,35 @@ enum PatchService {
 
         try removeDllEntries(in: gameURL)
 
+    }
+
+    /// Locations of every `d3d9.dll` WoWSilicon itself may have copied into a game folder.
+    static func embeddedD3D9DLLURLs() -> [URL] {
+        var urls: [URL] = VulkanDriver.allCases.compactMap {
+            resourceURL(named: "d3d9", extension: "dll", subdirectory: d3d9ResourceSubdirectory(for: $0))
+        }
+        if let mtld3d = BundledWineRuntime.rootURL()?
+            .appendingPathComponent("lib/wine/i386-windows/d3d9.dll", isDirectory: false),
+           FileManager.default.fileExists(atPath: mtld3d.path) {
+            urls.append(mtld3d)
+        }
+        return urls
+    }
+
+    /// Deletes `d3d9.dll` from the game folder only when it is byte-identical to one WoWSilicon
+    /// ships. A third-party d3d9.dll is left untouched. Returns whether a file was removed.
+    @discardableResult
+    static func removeEmbeddedD3D9DLL(in gameURL: URL) throws -> Bool {
+        let installed = gameURL.appendingPathComponent("d3d9.dll")
+        guard FileManager.default.fileExists(atPath: installed.path),
+              let installedData = try? Data(contentsOf: installed) else { return false }
+        for candidate in embeddedD3D9DLLURLs() {
+            if let data = try? Data(contentsOf: candidate), data == installedData {
+                try removeIfExists(installed)
+                return true
+            }
+        }
+        return false
     }
 
     // MARK: - Helpers

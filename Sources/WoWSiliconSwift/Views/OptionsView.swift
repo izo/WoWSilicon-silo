@@ -105,7 +105,9 @@ struct OptionsView: View {
             }
             optionAsAltControls
             retinaModeControls
-            rosettaX87Controls
+            if viewModel.currentVersion?.isWorldOfWarcraftX64 != true {
+                rosettaX87Controls
+            }
             Divider()
                 .padding(.vertical, 4)
             wineBottleControls
@@ -143,7 +145,8 @@ struct OptionsView: View {
 
     private var availableTabs: [OptionsTab] {
         OptionsTab.allCases.filter { tab in
-            tab != .realmlist || viewModel.currentVersion?.supportsRealmlist != false
+            (tab != .realmlist || viewModel.currentVersion?.supportsRealmlist != false)
+                && (tab != .graphics || viewModel.currentVersion?.isWorldOfWarcraftX64 != true)
         }
     }
 
