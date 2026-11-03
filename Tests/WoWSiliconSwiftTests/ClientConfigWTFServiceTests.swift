@@ -82,6 +82,42 @@ final class ClientConfigWTFServiceTests: XCTestCase {
         )
     }
 
+    func testLatin1ConfigKeepsOtherKeysAndEncoding() throws {
+        let dir = tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("WTF/Config.wtf")
+        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let original = "SET portal \"US\"\nSET realmName \"Royaume d\u{E9}j\u{E0}\"\nSET Gamma \"1.0\"\n"
+        let bytes = try XCTUnwrap(original.data(using: .isoLatin1))
+        XCTAssertNil(String(data: bytes, encoding: .utf8), "fixture must not be valid UTF-8")
+        try bytes.write(to: url)
+
+        try ClientConfigWTFService.apply(settings: VersionSettings(portal: "wow.ulk.me:1119"), gameURL: dir)
+
+        let written = try Data(contentsOf: url)
+        let text = try XCTUnwrap(String(data: written, encoding: .isoLatin1))
+        XCTAssertEqual(
+            text,
+            "SET portal \"wow.ulk.me:1119\"\nSET realmName \"Royaume d\u{E9}j\u{E0}\"\nSET Gamma \"1.0\"\nSET gxApi \"D3D11\"\n"
+        )
+    }
+
+    func testUnreadableConfigIsNeverReplaced() throws {
+        let dir = tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        // A directory where the file should be: it exists but cannot be read as a file.
+        let url = dir.appendingPathComponent("WTF/Config.wtf")
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        XCTAssertThrowsError(try ClientConfigWTFService.apply(settings: VersionSettings(), gameURL: dir)) { error in
+            guard case ClientConfigWTFService.ConfigError.unreadable = error else {
+                return XCTFail("Expected an unreadable error, got \(error)")
+            }
+            XCTAssertTrue(error.localizedDescription.contains("untouched"))
+        }
+        var isDirectory: ObjCBool = false
+        XCTAssertTrue(FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue)
+    }
+
     func testEmptyLocaleLeavesExistingLocaleAlone() throws {
         let dir = tempDir()
         defer { try? FileManager.default.removeItem(at: dir) }

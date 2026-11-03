@@ -3,6 +3,21 @@ import Foundation
 /// Writes `SET <key> "<value>"` lines in an 8.x client's `WTF/Config.wtf` without touching the other lines.
 /// Every value is validated against a closed format, so a profile can never inject extra lines.
 enum ClientConfigWTFService {
+    /// Config.wtf could not be read or written without risking the other keys.
+    enum ConfigError: LocalizedError {
+        case unreadable(path: String, reason: String)
+        case notEncodable(path: String)
+
+        var errorDescription: String? {
+            switch self {
+            case .unreadable(let path, let reason):
+                return "Could not read the client's Config.wtf at \(path), so it was left untouched. \(reason)"
+            case .notEncodable(let path):
+                return "Config.wtf at \(path) was left untouched: the new settings cannot be saved in its text encoding."
+            }
+        }
+    }
+
     /// Graphics API forced for x64 profiles: the launch already passes `-d3d11`, and a client
     /// that wrote `D3D12` itself would otherwise disagree with it.
     static let forcedGxApi = "D3D11"
@@ -74,11 +89,37 @@ enum ClientConfigWTFService {
         guard !entries.isEmpty else { return }
         let wtfURL = gameURL.appendingPathComponent("WTF", isDirectory: true)
         let configURL = wtfURL.appendingPathComponent("Config.wtf")
-        let existing = (try? String(contentsOf: configURL, encoding: .utf8)) ?? ""
+        let existing: String
+        var encoding = String.Encoding.utf8
+        if fileManager.fileExists(atPath: configURL.path) {
+            let data: Data
+            do {
+                data = try Data(contentsOf: configURL)
+            } catch {
+                // Never replace a file we could not read: that would drop every other key.
+                throw ConfigError.unreadable(path: configURL.path, reason: error.localizedDescription)
+            }
+            if let text = String(data: data, encoding: .utf8) {
+                existing = text
+            } else {
+                // Not UTF-8 (a client or editor wrote ANSI text). ISO Latin-1 maps every byte to one
+                // character, so decoding never fails and writing back restores the other lines byte for byte.
+                guard let text = String(data: data, encoding: .isoLatin1) else {
+                    throw ConfigError.unreadable(path: configURL.path, reason: "The text encoding is not supported.")
+                }
+                existing = text
+                encoding = .isoLatin1
+            }
+        } else {
+            existing = ""
+        }
         let updated = updatedContent(existing, entries: entries)
         guard updated != existing else { return }
+        guard let output = updated.data(using: encoding) else {
+            throw ConfigError.notEncodable(path: configURL.path)
+        }
         try fileManager.createDirectory(at: wtfURL, withIntermediateDirectories: true)
-        try updated.write(to: configURL, atomically: true, encoding: .utf8)
+        try output.write(to: configURL, options: .atomic)
     }
 
     /// Applies the settings of an x64 profile to the game folder's Config.wtf.
