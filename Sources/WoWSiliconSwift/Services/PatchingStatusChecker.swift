@@ -6,6 +6,10 @@ struct PatchStatusDescriptor {
     let text: String
     let level: StatusLevel
     let actionable: Bool
+    /// "Patch" is meaningful for this profile. False for the x64 client, which has nothing to patch.
+    var showsPatchAction: Bool = true
+    /// "Unpatch" is meaningful. For the x64 client only when a stale 32-bit d3d9.dll is present.
+    var showsUnpatchAction: Bool = true
 }
 
 enum PatchingStatusChecker {
@@ -47,15 +51,19 @@ enum PatchingStatusChecker {
                     applied: true,
                     text: "Stale 32-bit d3d9.dll — click Unpatch to remove",
                     level: .warning,
-                    actionable: true
+                    actionable: true,
+                    showsPatchAction: false,
+                    showsUnpatchAction: true
                 )
             }
-            // Nothing to patch. "Remove" stays available to clean a mistaken 32-bit d3d9.dll.
+            // Nothing to patch and nothing to remove: no Patch or Unpatch button.
             return PatchStatusDescriptor(
                 applied: true,
                 text: "No patch needed",
                 level: .success,
-                actionable: true
+                actionable: false,
+                showsPatchAction: false,
+                showsUnpatchAction: false
             )
         }
 
