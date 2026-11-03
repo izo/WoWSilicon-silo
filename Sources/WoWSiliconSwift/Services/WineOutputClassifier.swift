@@ -43,8 +43,8 @@ enum WineOutputClassifier {
     }
 
     /// Returns nil for a normal exit and for a non-zero exit after a long session with no known cause.
-    /// A clean exit (code 0) is still reported when GnuTLS was missing: the client can close itself
-    /// after the login failed. A death by signal (`bySignal`, `exitCode` is the signal number) is only
+    /// A clean exit (code 0) is still reported when GnuTLS was missing or the client crashed
+    /// (ERROR #132): the client can close itself after either. A death by signal (`bySignal`, `exitCode` is the signal number) is only
     /// reported for a known cause, since a user force-quitting Wine also ends that way.
     static func classify(
         exitCode: Int32,
@@ -53,7 +53,12 @@ enum WineOutputClassifier {
         bySignal: Bool = false
     ) -> WineLaunchFailure? {
         if exitCode == 0, !bySignal {
-            return indicatesMissingTLS(outputTail) ? .tlsLibraryMissing : nil
+            if indicatesMissingTLS(outputTail) { return .tlsLibraryMissing }
+            // The WoW crash handler can let the process end with code 0 after ERROR #132.
+            let crashed = ["ERROR #132", "Fatal exception!"].contains {
+                outputTail.range(of: $0, options: .caseInsensitive) != nil
+            }
+            return crashed ? .clientCrashed : nil
         }
 
         let text = outputTail

@@ -757,7 +757,8 @@ final class MainDashboardViewModel: ObservableObject {
         }
         launchService.processDidFail = { [weak self] error in
             self?.patchFeedback = PatchFeedback(
-                title: "Game Stopped",
+                // Neutral: a GnuTLS failure is reported while the game is still running.
+                title: "Game Problem",
                 message: error.localizedDescription,
                 isError: true
             )

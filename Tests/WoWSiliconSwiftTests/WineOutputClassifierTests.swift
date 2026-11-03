@@ -130,6 +130,11 @@ final class WineOutputClassifierTests: XCTestCase {
         XCTAssertNil(WineOutputClassifier.classify(exitCode: 0, duration: 600, outputTail: "all fine"))
     }
 
+    func testClientCrashIsReportedEvenWhenTheProcessExitsWithZero() {
+        let out = "ACCESS_VIOLATION : error 132: ERROR #132 (0x85100084) Fatal exception!\n"
+        XCTAssertEqual(WineOutputClassifier.classify(exitCode: 0, duration: 120, outputTail: out), .clientCrashed)
+    }
+
     func testDeathBySignalIsClassifiedOnlyForKnownCauses() {
         XCTAssertEqual(
             WineOutputClassifier.classify(exitCode: 11, duration: 300, outputTail: "ERROR #132 (0x85100084) Fatal exception!", bySignal: true),

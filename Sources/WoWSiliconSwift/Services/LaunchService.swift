@@ -406,8 +406,10 @@ final class LaunchService: @unchecked Sendable {
         let tlsWatcher = TLSFailureWatcher()
         // Reports the GnuTLS failure right away (once): the client may stay open on the login screen,
         // so waiting for the process to end would show nothing.
+        // Only the x64 (Battle.net) client needs TLS to log in; 32-bit and generic profiles never alert.
+        let watchesTLS = configuration.version.isWorldOfWarcraftX64
         let reportTLSFailure: @Sendable (String) -> Void = { [weak self] text in
-            guard tlsWatcher.consume(text) else { return }
+            guard watchesTLS, tlsWatcher.consume(text) else { return }
             let error = LaunchServiceError.wineProcessFailed(.tlsLibraryMissing, logPath: capture.logURL?.path)
             DispatchQueue.main.async { self?.processDidFail?(error) }
         }
