@@ -9,7 +9,7 @@ swift build                                  # debug build, no Wine runtime need
 swift test                                   # full XCTest suite (also what CI runs)
 swift test --filter GameLaunchCoordinatorTests   # single test class
 swift test --filter GameLaunchCoordinatorTests/testName   # single test
-make bundle                                  # release build + WoWSilicon.app in .build/
+make bundle                                  # release build + SiloWow.app in .build/
 make run                                     # bundle, then open the app
 make dmg                                     # DMG in .build/release-archives/
 make xcode                                   # open WoWSilicon.xcodeproj
@@ -29,7 +29,7 @@ xcodebuild -scheme WoWSilicon -configuration Debug CODE_SIGNING_ALLOWED=NO test 
 **Layers** (under `Sources/WoWSiliconSwift/`):
 - `Models/` holds the data. `GameVersion` is a launcher "profile" (one game folder plus its `GraphicsSettings` and `VersionSettings`). `VersionManager` wraps the profile list. `GameProfileKind` distinguishes WoW client families from `generic_d3d9` profiles.
 - `Stores/` persists state: `VersionStore` (profiles on disk), `UserPrefsStore`.
-- `Services/` does the work, and most of it shells out to Wine. `ProcessRunner` runs child processes, `WineBottleService` creates and manages the Wine prefix, `LaunchService` starts a client, `PatchService` and `PatchingStatusChecker` manage game-folder patching, `ConfigService` and `DXVKConfigService` write per-profile config, `AddonService` and `ModService` manage addons and DLL mods, `UpdaterService` wraps Sparkle, and `TelemetryService` reports to the Cloudflare Worker in `tools/telemetry-worker/`.
+- `Services/` does the work, and most of it shells out to Wine. `ProcessRunner` runs child processes, `WineBottleService` creates and manages the Wine prefix, `LaunchService` starts a client, `PatchService` and `PatchingStatusChecker` manage game-folder patching, `ConfigService` and `DXVKConfigService` write per-profile config, `AddonService` and `ModService` manage addons and DLL mods, `UpdaterService` wraps Sparkle. The app sends no telemetry (the Cloudflare Worker in `tools/telemetry-worker/` is kept but unused).
 - `ViewModels/` sits between Views and Services. `MainDashboardViewModel` is the root state. `GameLaunchCoordinator` runs launch preflight (`GameLaunchPreflight`) and then the launch.
 - `Views/` is SwiftUI only. `WoWSiliconSwiftApp.swift` sets up the single `Window`, the Sparkle menu command, and the `AppDelegate`.
 
@@ -43,10 +43,11 @@ xcodebuild -scheme WoWSilicon -configuration Debug CODE_SIGNING_ALLOWED=NO test 
 
 **Wine is called as a subprocess.** Everything that touches Wine goes through `ProcessRunner`. Wine-specific logic (registry edits, focus matching, process monitoring) lives in `WineRegistrySupport`, `WineApplicationFocusMatcher`, and `WineProcessMonitor`. Changes there need a Mac with the bundled runtime to test end to end. Unit tests can only cover the Swift side.
 
-**Release flow.** Pushing a `v*.*.*` tag triggers `.github/workflows/release.yml` (macos-26). It restores the Wine runtime, sets the version from the tag, and runs `make dmg` and `make appcast`. The appcast is published to the Pages repo. Release notes go in `docs/releases/<version>.md`. Secrets are described in `docs/releasing.md`.
+**Release flow.** Pushing a `v*.*.*` tag triggers `.github/workflows/release.yml` (macos-26, guarded by `github.repository == 'izo/WoWSilicon-silo'`). It restores the Wine runtime from this repository, validates and sets the version from the tag, and runs `make dmg` and `make appcast`. The appcast is published to the `gh-pages` branch of this same repository with `GITHUB_TOKEN`; the only secret is `SPARKLE_PRIVATE_KEY`. Release notes go in `docs/releases/<version>.md`. Details are in `docs/releasing.md`.
 
 ## Rules
 
+- **Independent project.** The app is displayed as **SiloWow** (bundle id `silowow.regrets.app`, tests `silowow.regrets.app.tests`, executable and `SiloWow.app`). It no longer follows the upstream `WoWSilicon/WoWSilicon` (no feed, no telemetry, no shared secrets). The git remote `upstream` stays, read-only. User data lives in `~/Library/Application Support/SiloWow`, copied once from `.../WoWSilicon` at first launch (`AppIdentityMigration`). Kept on purpose: Swift module `WoWSiliconSwift`, the default Wine bottle `~/WoWSilicon`, `WOWSILICON_*` env vars and the spatial-audio control file under `Application Support/WoWSilicon` (all read by the patched Wine runtime), and the `WoWSilicon-WineRuntime-*` assets.
 - **Never write to the upstream repository `https://github.com/WoWSilicon/WoWSilicon`.** No commit, push, tag, branch, issue, comment, PR, label or setting change, whether through `git`, `gh`, the GitHub API or an MCP tool. It is not this project's repository. The only repository to write to is `izo/WoWSilicon-silo` (`origin`).
 - **Name the target explicitly.** Run `git remote get-url origin` before any push, and always pass `--repo izo/WoWSilicon-silo` to `gh`. `gh` has no default repository set here and can resolve to the upstream one.
 - If a task seems to need a change upstream, stop and tell the user. Reading upstream (`gh issue view`, `gh repo view`) is fine.
@@ -55,4 +56,4 @@ xcodebuild -scheme WoWSilicon -configuration Debug CODE_SIGNING_ALLOWED=NO test 
 
 - UI decisions live in `docs/decisions.md` (ADR-001 to ADR-004): macOS 26 minimum, sober identity with the brass-gear icon, options split into profile / Wine bottle / global scopes, and the AuDHD UI guide (`tierces-design:audhd-ui-guide`) applies to every screen.
 
-- Keep Swift 6 strict concurrency clean (`swift-tools-version: 6.0`, `SWIFT_VERSION` 6.0). `GameVersion` and friends are `Sendable` value types. Most services are `enum` namespaces or `struct`s. `LaunchService` and `TelemetryService` are `final class`es.
+- Keep Swift 6 strict concurrency clean (`swift-tools-version: 6.0`, `SWIFT_VERSION` 6.0). `GameVersion` and friends are `Sendable` value types. Most services are `enum` namespaces or `struct`s. `LaunchService` is a `final class`.

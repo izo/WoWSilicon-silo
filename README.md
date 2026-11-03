@@ -1,33 +1,33 @@
 <p align="center">
-  <img src="Sources/WoWSiliconSwift/Resources/Icons/turtlesilicon_icon.png" alt="WoWSilicon icon" width="96" height="96">
+  <img src="Sources/WoWSiliconSwift/Resources/Icons/turtlesilicon_icon.png" alt="SiloWow icon" width="96" height="96">
 </p>
 
-<h1 align="center">WoWSilicon</h1>
+<h1 align="center">SiloWow</h1>
 
 <p align="center">
-  <a href="https://github.com/WoWSilicon/WoWSilicon/actions/workflows/release.yml">
-    <img src="https://github.com/WoWSilicon/WoWSilicon/actions/workflows/release.yml/badge.svg" alt="Release workflow status">
+  <a href="https://github.com/izo/WoWSilicon-silo/actions/workflows/release.yml">
+    <img src="https://github.com/izo/WoWSilicon-silo/actions/workflows/release.yml/badge.svg" alt="Release workflow status">
   </a>
-  <a href="https://github.com/WoWSilicon/WoWSilicon/stargazers">
-    <img src="https://img.shields.io/github/stars/WoWSilicon/WoWSilicon?style=flat&label=stars" alt="GitHub stars">
+  <a href="https://github.com/izo/WoWSilicon-silo/stargazers">
+    <img src="https://img.shields.io/github/stars/izo/WoWSilicon-silo?style=flat&label=stars" alt="GitHub stars">
   </a>
-  <a href="https://github.com/WoWSilicon/WoWSilicon/releases">
-    <img src="https://img.shields.io/github/downloads/WoWSilicon/WoWSilicon/total?style=flat&label=downloads" alt="GitHub release downloads">
+  <a href="https://github.com/izo/WoWSilicon-silo/releases">
+    <img src="https://img.shields.io/github/downloads/izo/WoWSilicon-silo/total?style=flat&label=downloads" alt="GitHub release downloads">
   </a>
-  <a href="https://github.com/WoWSilicon/WoWSilicon/releases">
-    <img src="https://img.shields.io/github/v/release/WoWSilicon/WoWSilicon?style=flat&label=latest" alt="Latest release">
+  <a href="https://github.com/izo/WoWSilicon-silo/releases">
+    <img src="https://img.shields.io/github/v/release/izo/WoWSilicon-silo?style=flat&label=latest" alt="Latest release">
   </a>
   <a href="https://discord.gg/pwZD5zBwfD">
     <img src="https://img.shields.io/badge/discord-join-5865F2?style=flat&logo=discord&logoColor=white" alt="Join the Discord">
   </a>
 </p>
 
-WoWSilicon is a macOS launcher for older World of Warcraft clients on Apple Silicon Macs.
+SiloWow is a macOS launcher for older World of Warcraft clients on Apple Silicon Macs.
 
 It bundles a customized Wine runtime alongside RosettaX87, DX9 translation, and game patching so clients from the 2006-2010 era can run efficiently on modern macOS hardware.
 
 <p align="center">
-  <img src="docs/assets/launcher-preview.png" alt="WoWSilicon launcher preview" width="760">
+  <img src="docs/assets/launcher-preview.png" alt="SiloWow launcher preview" width="760">
 </p>
 
 ## Supported Clients
@@ -61,17 +61,19 @@ It bundles a customized Wine runtime alongside RosettaX87, DX9 translation, and 
 
 Download the latest release from:
 
-https://wowsilicon.github.io/
+https://github.com/izo/WoWSilicon-silo/releases/latest
 
-Move `WoWSilicon.app` to `/Applications`.
+Move `SiloWow.app` to `/Applications`.
 
 If macOS blocks the app because the build is unsigned, remove the quarantine attribute after moving it:
 
 ```sh
-xattr -dr com.apple.quarantine /Applications/WoWSilicon.app
+xattr -dr com.apple.quarantine /Applications/SiloWow.app
 ```
 
-Then open WoWSilicon, select the game folder, apply the required game patch, and launch the selected client profile.
+Then open SiloWow, select the game folder, apply the required game patch, and launch the selected client profile.
+
+SiloWow is an independent project. It has no connection to the upstream WoWSilicon update feed, and it collects no telemetry.
 
 ## Development
 
@@ -116,7 +118,7 @@ See [docs/releasing.md](docs/releasing.md) for the release flow and required rep
 
 ## Credits
 
-WoWSilicon builds on the work of these open-source projects:
+SiloWow builds on the work of these open-source projects:
 
 - [D9VK](https://github.com/Sikarugir-App/d9vk) — Direct3D 9 translation through Vulkan
 - [rosettax87_jit](https://github.com/Lifeisawful/rosettax87_jit) — accelerated x87 translation for Rosetta 2
@@ -126,6 +128,6 @@ WoWSilicon builds on the work of these open-source projects:
 
 ## Disclaimer
 
-WoWSilicon is not affiliated with or endorsed by Blizzard Entertainment.
+SiloWow is not affiliated with or endorsed by Blizzard Entertainment.
 
 This project is not advocating the use of any private server. It is intended to help older client binaries run on Apple Silicon hardware in an efficient and performant way. The project maintainers are not liable for how the launcher is used.

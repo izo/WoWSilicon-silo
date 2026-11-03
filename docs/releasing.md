@@ -1,20 +1,40 @@
 # Releasing
 
-WoWSilicon releases are created from version tags such as `v2.6.0`.
+SiloWow releases are created from version tags such as `v2.6.0`.
 
 ## GitHub Setup
 
-The `WoWSilicon/WoWSilicon` repository needs these Actions secrets:
-
-- `SPARKLE_PRIVATE_KEY`
-- `PAGES_REPO_TOKEN`
+The `izo/WoWSilicon-silo` repository needs one Actions secret, `SPARKLE_PRIVATE_KEY`.
+The workflow only runs on that repository and publishes with the built-in `GITHUB_TOKEN`
+(no personal access token).
 
 `SPARKLE_PRIVATE_KEY` must be the Sparkle private EdDSA key value only. Do not
 use the public key, XML, or the full `generate_keys` output. The secret should
 look like one base64 string; optional surrounding quotes or a
 `SPARKLE_PRIVATE_KEY=` prefix are tolerated.
 
-`PAGES_REPO_TOKEN` must have contents write access to `WoWSilicon/wowsilicon.github.io`.
+The key lives in the macOS keychain under the account `silowow.regrets.app.updates`;
+its public half is `SUPublicEDKey` in `Packaging/Info.plist`. To export it and set the
+secret, then delete the file:
+
+```sh
+.build/artifacts/sparkle/Sparkle/bin/generate_keys --account silowow.regrets.app.updates -x /tmp/sparkle_key
+gh secret set SPARKLE_PRIVATE_KEY --repo izo/WoWSilicon-silo < /tmp/sparkle_key
+rm -P /tmp/sparkle_key
+```
+
+Updates are served from GitHub Pages: in the repository settings, enable Pages with
+source "Deploy from a branch", branch `gh-pages`, folder `/ (root)`. The workflow
+creates the `gh-pages` branch on the first release. The feed is
+`https://izo.github.io/WoWSilicon-silo/appcast.xml`.
+
+## Wine runtime release
+
+`tools/wine-runtime/restore.sh` downloads the runtime pinned in
+`Packaging/WineRuntime/artifact-lock.json` from the release `wine-runtime-r17` of
+`izo/WoWSilicon-silo` (asset `WoWSilicon-WineRuntime-r17.tar.xz`). Publish that release on
+the fork before the first tag. Use `WINE_RUNTIME_REPOSITORY=owner/repo` or `--repository`
+to restore from another repository.
 
 ## Versioning
 
@@ -72,4 +92,4 @@ The GitHub Action uses `docs/releases/<version>.md` when it exists. The same
 notes are embedded in the Sparkle appcast and used as the GitHub Release body.
 If the file is missing, the release falls back to generated placeholder notes.
 
-The GitHub Action builds the DMG, creates or updates the GitHub Release, generates the signed update feed, and publishes `appcast.xml` to the Pages repository.
+The GitHub Action builds the DMG, creates or updates the GitHub Release, generates the signed update feed, and publishes `appcast.xml` to the `gh-pages` branch of this repository.
