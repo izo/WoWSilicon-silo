@@ -27,6 +27,16 @@ enum ClientConfigWTFService {
         "enUS", "enGB", "frFR", "deDE", "esES", "esMX", "itIT", "ptBR", "ruRU", "koKR", "zhCN", "zhTW"
     ]
 
+    /// Expected format, shown next to the field and when a launch is blocked.
+    static let portalFormatHint = "Use a host name with an optional port, for example wow.ulk.me:1119."
+
+    /// The trimmed portal of an x64 profile when it is set but invalid; nil when launching is fine.
+    static func invalidPortal(for version: GameVersion) -> String? {
+        guard version.isWorldOfWarcraftX64 else { return nil }
+        let portal = version.settings.portal.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !portal.isEmpty && !isValidPortal(portal) ? portal : nil
+    }
+
     /// Host (letters, digits, `.`, `-`, `_`) with an optional `:port`.
     static func isValidPortal(_ portal: String) -> Bool {
         portal.range(of: #"^[A-Za-z0-9._-]+(:[0-9]{1,5})?$"#, options: .regularExpression) != nil

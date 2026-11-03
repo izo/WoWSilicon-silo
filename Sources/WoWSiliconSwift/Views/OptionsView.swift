@@ -711,7 +711,7 @@ struct OptionsView: View {
                         .autocorrectionDisabled()
                 }
                 if portalIsInvalid {
-                    Label("Use a host name with an optional port, for example wow.ulk.me:1119. This value is not written.", systemImage: "exclamationmark.triangle.fill")
+                    Label("\(ClientConfigWTFService.portalFormatHint) Launching is blocked until this is fixed.", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
                         .foregroundStyle(.orange)
                         .fixedSize(horizontal: false, vertical: true)

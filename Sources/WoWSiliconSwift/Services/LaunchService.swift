@@ -55,6 +55,7 @@ enum LaunchServiceError: LocalizedError {
     case versionMismatch(String, String)
     case unsupportedProfileKind(String)
     case wineProcessFailed(WineLaunchFailure, logPath: String?)
+    case invalidPortal(String)
 
     var errorDescription: String? {
         switch self {
@@ -93,6 +94,8 @@ enum LaunchServiceError: LocalizedError {
             return "This profile uses the type \"\(kind)\", which this version of SiloWow does not know. The profile is kept as is, but it cannot be launched. Update SiloWow to use it."
         case .wineProcessFailed(let failure, let logPath):
             return failure.userMessage(logPath: logPath)
+        case .invalidPortal(let portal):
+            return "The Portal \"\(portal)\" in this profile's Options is not valid, so the game was not started (it would connect to the server written in Config.wtf instead). \(ClientConfigWTFService.portalFormatHint)"
         case .versionMismatch(let base, let tweaked):
             return "Build mismatch detected.\n\nWoW.exe: \(base)\nWoW_tweaked.exe: \(tweaked)\n\nWoWSilicon can re-generate the tweaked executable for you."
         }

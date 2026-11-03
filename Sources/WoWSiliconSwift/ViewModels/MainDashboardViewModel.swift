@@ -725,6 +725,10 @@ final class MainDashboardViewModel: ObservableObject {
             case .cancelled:
                 self.isGameOperationInProgress = false
                 self.launchTask = nil
+            case .blocked(let error):
+                self.patchFeedback = PatchFeedback(title: "Cannot Launch", message: error.localizedDescription, isError: true)
+                self.isGameOperationInProgress = false
+                self.launchTask = nil
             }
         }
     }

@@ -44,6 +44,44 @@ final class GameLaunchCoordinatorTests: XCTestCase {
         XCTAssertEqual(launchCount, 1)
     }
 
+    private func x64Version(portal: String) -> GameVersion {
+        var version = GameVersion(
+            id: "x64", displayName: "BfA", profileKind: .worldOfWarcraftX64, wowVersion: "8.3.7",
+            gamePath: "/tmp/x64", executableName: "Wow.exe",
+            supportsVanillaTweaks: false, supportsDLLLoading: false, usesRosettaPatching: false
+        )
+        version.settings.portal = portal
+        return version
+    }
+
+    func testInvalidPortalBlocksLaunchBeforeAnythingStarts() async {
+        let coordinator = GameLaunchCoordinator(
+            processCountProvider: { XCTFail("Must not look at Wine processes"); return 0 },
+            gameLauncher: { _ in XCTFail("Must not launch with an invalid portal") }
+        )
+        let result = await coordinator.prepareLaunch(version: x64Version(portal: "US portal"), isAudioBusy: { false })
+        guard case .blocked(let error) = result, case .invalidPortal(let portal) = error else {
+            return XCTFail("Expected a blocked preflight")
+        }
+        XCTAssertEqual(portal, "US portal")
+        let message = error.localizedDescription
+        XCTAssertTrue(message.contains(ClientConfigWTFService.portalFormatHint))
+    }
+
+    func testEmptyOrValidPortalDoesNotBlock() async {
+        let coordinator = GameLaunchCoordinator(processCountProvider: { 0 }, gameLauncher: { _ in })
+        for portal in ["", "  ", "wow.ulk.me:1119", " wow.ulk.me "] {
+            let result = await coordinator.prepareLaunch(version: x64Version(portal: portal), isAudioBusy: { false })
+            guard case .ready = result else { return XCTFail("Portal \"\(portal)\" must not block") }
+        }
+    }
+
+    func testPortalIsIgnoredForNonX64Profiles() throws {
+        var version = try XCTUnwrap(VersionManager.defaultVersions[VersionManager.defaultCurrentVersionID])
+        version.settings.portal = "not valid"
+        XCTAssertNil(ClientConfigWTFService.invalidPortal(for: version))
+    }
+
     func testLaunchErrorsBecomePresentationOutcomes() async throws {
         let version = try XCTUnwrap(VersionManager.defaultVersions[VersionManager.defaultCurrentVersionID])
         let coordinator = GameLaunchCoordinator(

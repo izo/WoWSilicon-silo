@@ -4,6 +4,8 @@ enum GameLaunchPreflight {
     case ready(processCount: Int?)
     case existingWine(processCount: Int)
     case cancelled
+    /// A profile setting makes the launch unsafe: nothing is started.
+    case blocked(LaunchServiceError)
 }
 
 enum GameLaunchOutcome {
@@ -45,6 +47,10 @@ final class GameLaunchCoordinator {
         version: GameVersion,
         isAudioBusy: @escaping @MainActor () -> Bool
     ) async -> GameLaunchPreflight {
+        if let portal = ClientConfigWTFService.invalidPortal(for: version) {
+            return .blocked(.invalidPortal(portal))
+        }
+
         beginMeasurement(for: version)
 
         while isAudioBusy() {
