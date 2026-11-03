@@ -53,4 +53,6 @@ xcodebuild -scheme WoWSilicon -configuration Debug CODE_SIGNING_ALLOWED=NO test 
 
 ## Conventions
 
+- UI decisions live in `docs/decisions.md` (ADR-001 to ADR-004): macOS 26 minimum, sober identity with the brass-gear icon, options split into profile / Wine bottle / global scopes, and the AuDHD UI guide (`tierces-design:audhd-ui-guide`) applies to every screen.
+
 - Keep Swift 6 strict concurrency clean (`swift-tools-version: 6.0`, `SWIFT_VERSION` 6.0). `GameVersion` and friends are `Sendable` value types. Most services are `enum` namespaces or `struct`s. `LaunchService` and `TelemetryService` are `final class`es.
