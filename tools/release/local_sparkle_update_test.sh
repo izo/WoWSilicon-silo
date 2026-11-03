@@ -7,7 +7,7 @@ HOST="${SPARKLE_TEST_HOST:-127.0.0.1}"
 PORT="${SPARKLE_TEST_PORT:-8000}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TEST_DIR="$ROOT_DIR/.build/sparkle-local-test"
-OLD_APP="$TEST_DIR/WoWSilicon-$OLD_VERSION.app"
+OLD_APP="$TEST_DIR/SiloWow-$OLD_VERSION.app"
 FEED_URL="http://$HOST:$PORT/appcast.xml"
 DOWNLOAD_URL_PREFIX="http://$HOST:$PORT/"
 
@@ -31,7 +31,7 @@ mkdir -p "$TEST_DIR"
 echo "Building old local test app $OLD_VERSION ($OLD_BUILD)..."
 make bundle VERSION="$OLD_VERSION" BUILD_NUMBER="$OLD_BUILD"
 rm -rf "$OLD_APP"
-cp -R "$ROOT_DIR/.build/WoWSilicon.app" "$OLD_APP"
+cp -R "$ROOT_DIR/.build/SiloWow.app" "$OLD_APP"
 
 echo "Pointing old app at local feed $FEED_URL..."
 /usr/libexec/PlistBuddy -c "Set :SUFeedURL $FEED_URL" "$OLD_APP/Contents/Info.plist"
@@ -53,7 +53,7 @@ Local Sparkle update test is ready.
 
    open "$OLD_APP"
 
-3. In WoWSilicon, choose Options -> Check for Updates...
+3. In SiloWow, choose Options -> Check for Updates...
 
 Nothing was uploaded. The test feed is:
 

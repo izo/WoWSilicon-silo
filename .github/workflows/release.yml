@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   release:
+    if: github.repository == 'izo/WoWSilicon-silo'
     runs-on: macos-26
 
     steps:
@@ -36,12 +37,19 @@ jobs:
       - name: Resolve version
         id: version
         shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           set -euo pipefail
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            version="${{ inputs.version }}"
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            version="$INPUT_VERSION"
           else
             version="${GITHUB_REF_NAME#v}"
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version: expected MAJOR.MINOR.PATCH" >&2
+            exit 1
           fi
           build_number="$(tools/release/version_to_build_number.sh "$version")"
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -49,14 +57,19 @@ jobs:
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
       - name: Set release version
-        run: tools/release/set_version.sh "${{ steps.version.outputs.version }}" "${{ steps.version.outputs.build_number }}"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+        run: tools/release/set_version.sh "$VERSION" "$BUILD_NUMBER"
 
       - name: Resolve release notes
         id: release_notes
         shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          notes="docs/releases/${{ steps.version.outputs.version }}.md"
+          notes="docs/releases/$VERSION.md"
           if [[ -f "$notes" ]]; then
             echo "file=$notes" >> "$GITHUB_OUTPUT"
           else
@@ -88,24 +101,39 @@ jobs:
             end
           '
 
-      - name: Checkout Pages repo
+      - name: Check for existing gh-pages branch
+        id: pages_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout gh-pages branch
+        if: steps.pages_branch.outputs.exists == 'true'
         uses: actions/checkout@v4
         with:
-          repository: WoWSilicon/wowsilicon.github.io
+          ref: gh-pages
           path: pages
-          token: ${{ secrets.PAGES_REPO_TOKEN }}
 
       - name: Build DMG and appcast
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
           EXISTING_APPCAST: ${{ github.workspace }}/pages/appcast.xml
           RELEASE_NOTES_FILE: ${{ steps.release_notes.outputs.file }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
           make appcast \
-            VERSION="${{ steps.version.outputs.version }}" \
-            BUILD_NUMBER="${{ steps.version.outputs.build_number }}" \
-            DOWNLOAD_URL_PREFIX="https://github.com/WoWSilicon/WoWSilicon/releases/download/${{ steps.version.outputs.tag }}/"
+            VERSION="$VERSION" \
+            BUILD_NUMBER="$BUILD_NUMBER" \
+            DOWNLOAD_URL_PREFIX="https://github.com/izo/WoWSilicon-silo/releases/download/$TAG/"
 
       - name: Create or update GitHub release
         env:
@@ -114,20 +142,28 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          dmg=".build/release-archives/WoWSilicon-$VERSION.dmg"
-          notes=".build/appcast/WoWSilicon-$VERSION.md"
+          dmg=".build/release-archives/SiloWow-$VERSION.dmg"
+          notes=".build/appcast/SiloWow-$VERSION.md"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$dmg" --clobber
-            gh release edit "$TAG" --title "WoWSilicon $VERSION" --notes-file "$notes"
+            gh release edit "$TAG" --title "SiloWow $VERSION" --notes-file "$notes"
           else
-            gh release create "$TAG" "$dmg" --title "WoWSilicon $VERSION" --notes-file "$notes"
+            gh release create "$TAG" "$dmg" --title "SiloWow $VERSION" --notes-file "$notes"
           fi
 
-      - name: Publish appcast to Pages repo
+      - name: Publish appcast to gh-pages
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          BRANCH_EXISTS: ${{ steps.pages_branch.outputs.exists }}
         run: |
           set -euo pipefail
+          if [[ "$BRANCH_EXISTS" != "true" ]]; then
+            mkdir -p pages
+            git -C pages init -q
+            git -C pages checkout -q --orphan gh-pages
+            git -C pages remote add origin "$(git remote get-url origin)"
+            git -C pages config http.https://github.com/.extraheader "$(git config --get http.https://github.com/.extraheader)"
+          fi
           cp .build/appcast/appcast.xml pages/appcast.xml
           cd pages
           git config user.name "github-actions[bot]"
@@ -136,6 +172,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No appcast changes to publish."
           else
-            git commit -m "Update appcast for WoWSilicon $VERSION"
-            git push
+            git commit -m "Update appcast for SiloWow $VERSION"
+            git push origin HEAD:gh-pages
           fi

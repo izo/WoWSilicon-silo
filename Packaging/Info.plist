@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>WoWSilicon</string>
+	<string>SiloWow</string>
 	<key>CFBundleExecutable</key>
-	<string>WoWSilicon</string>
+	<string>SiloWow</string>
 	<key>CFBundleIconFile</key>
 	<string>turtle</string>
 	<key>CFBundleIconFiles</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>silowow.regrets.app</string>
 	<key>CFBundleName</key>
-	<string>WoWSilicon</string>
+	<string>SiloWow</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -31,8 +31,8 @@
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://wowsilicon.github.io/appcast.xml</string>
+	<string>https://izo.github.io/WoWSilicon-silo/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>KAU42Mn11WBoZMPfk8Elr1jdmUba6oEBaTaPVykn/zk=</string>
+	<string>6zXsQzLtgrWYQZv41AVlUxEDsQh4yunEW/pa5kr/beo=</string>
 </dict>
 </plist>

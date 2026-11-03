@@ -2,7 +2,15 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 [--runtime PATH] [--repository OWNER/REPO]" >&2
+  cat >&2 <<'USAGE'
+Usage: restore.sh [--runtime PATH] [--repository OWNER/REPO]
+
+Downloads and verifies the pinned Wine runtime release.
+  --runtime PATH           destination (default: <repo>/.wine-runtime)
+  --repository OWNER/REPO  GitHub repository holding the runtime release
+                           (default: izo/WoWSilicon-silo; also settable with
+                           the WINE_RUNTIME_REPOSITORY environment variable)
+USAGE
   exit 1
 }
 
@@ -10,7 +18,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/../.." && pwd)"
 artifact_lock="$repo_root/Packaging/WineRuntime/artifact-lock.json"
 runtime="$repo_root/.wine-runtime"
-repository="${GITHUB_REPOSITORY:-WoWSilicon/WoWSilicon}"
+repository="${WINE_RUNTIME_REPOSITORY:-izo/WoWSilicon-silo}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

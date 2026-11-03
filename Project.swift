@@ -48,7 +48,7 @@ let project = Project(
                 base: [
                     "INFOPLIST_FILE": "Packaging/Info.plist",
                     "PRODUCT_BUNDLE_IDENTIFIER": "silowow.regrets.app",
-                    "PRODUCT_NAME": "WoWSilicon",
+                    "PRODUCT_NAME": "SiloWow",
                     "ASSETCATALOG_COMPILER_APPICON_NAME": "turtle",
                     "COMBINE_HIDPI_IMAGES": "YES",
                     "LD_RUNPATH_SEARCH_PATHS": [

@@ -1,13 +1,13 @@
-APP_NAME := WoWSilicon
-BINARY_NAME := WoWSilicon
+APP_NAME := SiloWow
+BINARY_NAME := SiloWow
 BUILD_DIR := $(CURDIR)/.build
 VERSION ?= $(shell /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Packaging/Info.plist)
 BUILD_NUMBER ?= $(shell /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Packaging/Info.plist)
 DEBUG_BIN := $(BUILD_DIR)/arm64-apple-macosx/debug/$(BINARY_NAME)
 APP_BUNDLE := $(BUILD_DIR)/$(APP_NAME).app
-SPARKLE_ACCOUNT ?= com.wowsilicon.updates
+SPARKLE_ACCOUNT ?= silowow.regrets.app.updates
 SPARKLE_GENERATE_APPCAST := $(BUILD_DIR)/artifacts/sparkle/Sparkle/bin/generate_appcast
-DOWNLOAD_URL_PREFIX ?= https://github.com/WoWSilicon/WoWSilicon/releases/download/v$(VERSION)/
+DOWNLOAD_URL_PREFIX ?= https://github.com/izo/WoWSilicon-silo/releases/download/v$(VERSION)/
 CODESIGN_IDENTITY ?= -
 ARCHIVE_DIR := $(BUILD_DIR)/release-archives
 DMG_STAGING_DIR := $(BUILD_DIR)/dmg-staging
@@ -127,7 +127,7 @@ appcast: dmg
 	@if [ -n "$${RELEASE_NOTES_FILE:-}" ] && [ -f "$${RELEASE_NOTES_FILE}" ]; then \
 		cp "$${RELEASE_NOTES_FILE}" "$(APPCAST_DIR)/$(APP_NAME)-$(VERSION).md"; \
 	else \
-		printf '# WoWSilicon %s\n\nSee the GitHub release for changes.\n' "$(VERSION)" > "$(APPCAST_DIR)/$(APP_NAME)-$(VERSION).md"; \
+		printf '# SiloWow %s\n\nSee the GitHub release for changes.\n' "$(VERSION)" > "$(APPCAST_DIR)/$(APP_NAME)-$(VERSION).md"; \
 	fi
 	@if [ -n "$${EXISTING_APPCAST:-}" ] && [ -f "$${EXISTING_APPCAST}" ]; then \
 		cp "$${EXISTING_APPCAST}" "$(APPCAST_PATH)"; \
@@ -137,14 +137,14 @@ appcast: dmg
 			--ed-key-file - \
 			--embed-release-notes \
 			--download-url-prefix "$(DOWNLOAD_URL_PREFIX)" \
-			--link "https://wowsilicon.github.io/" \
+			--link "https://github.com/izo/WoWSilicon-silo" \
 			"$(APPCAST_DIR)"; \
 	else \
 		"$(SPARKLE_GENERATE_APPCAST)" \
 			--account "$(SPARKLE_ACCOUNT)" \
 			--embed-release-notes \
 			--download-url-prefix "$(DOWNLOAD_URL_PREFIX)" \
-			--link "https://wowsilicon.github.io/" \
+			--link "https://github.com/izo/WoWSilicon-silo" \
 			"$(APPCAST_DIR)"; \
 	fi
 	@echo "Appcast generated at $(APPCAST_PATH)"

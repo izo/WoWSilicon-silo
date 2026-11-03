@@ -19,4 +19,4 @@ if [[ -f Project.swift ]]; then
   perl -0pi -e "s/\"CURRENT_PROJECT_VERSION\": \"[^\"]+\"/\"CURRENT_PROJECT_VERSION\": \"$build_number\"/" Project.swift
 fi
 
-echo "Set WoWSilicon version to $version ($build_number)"
+echo "Set SiloWow version to $version ($build_number)"

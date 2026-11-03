@@ -23,7 +23,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		5141EFFF35ACD6C51F274E4D /* WoWSilicon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WoWSilicon.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5141EFFF35ACD6C51F274E4D /* SiloWow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SiloWow.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		68D128FAC7073081D8355714 /* WoWSiliconSwiftTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WoWSiliconSwiftTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D21D78C912DE769D95009BEB /* Patching */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Sources/WoWSiliconSwift/Resources/Patching; sourceTree = "<group>"; };
 		7D95B648EFA5C30BD8522A85 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -114,7 +114,7 @@
 		B88D7E26791946AEFDCC8BB7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5141EFFF35ACD6C51F274E4D /* WoWSilicon.app */,
+				5141EFFF35ACD6C51F274E4D /* SiloWow.app */,
 				68D128FAC7073081D8355714 /* WoWSiliconSwiftTests.xctest */,
 			);
 			name = Products;
@@ -144,7 +144,7 @@
 				4B8D6F592DB40A8177F35C78 /* Sparkle */,
 			);
 			productName = WoWSilicon;
-			productReference = 5141EFFF35ACD6C51F274E4D /* WoWSilicon.app */;
+			productReference = 5141EFFF35ACD6C51F274E4D /* SiloWow.app */;
 			productType = "com.apple.product-type.application";
 		};
 		208C54D1C19CFF7994A925A1 /* WoWSiliconSwiftTests */ = {
@@ -324,7 +324,7 @@
 				MARKETING_VERSION = 3.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = silowow.regrets.app;
 				PRODUCT_MODULE_NAME = WoWSiliconSwift;
-				PRODUCT_NAME = WoWSilicon;
+				PRODUCT_NAME = SiloWow;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -350,7 +350,7 @@
 				MARKETING_VERSION = 3.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = silowow.regrets.app;
 				PRODUCT_MODULE_NAME = WoWSiliconSwift;
-				PRODUCT_NAME = WoWSilicon;
+				PRODUCT_NAME = SiloWow;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
@@ -367,7 +367,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = silowow.regrets.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 6.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WoWSilicon.app/Contents/MacOS/WoWSilicon";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SiloWow.app/Contents/MacOS/SiloWow";
 			};
 			name = Debug;
 		};
@@ -382,7 +382,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = silowow.regrets.app.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 6.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/WoWSilicon.app/Contents/MacOS/WoWSilicon";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SiloWow.app/Contents/MacOS/SiloWow";
 			};
 			name = Release;
 		};

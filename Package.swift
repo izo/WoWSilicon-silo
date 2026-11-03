@@ -10,7 +10,7 @@ let package = Package(
     ],
     products: [
         .executable(
-            name: "WoWSilicon",
+            name: "SiloWow",
             targets: ["WoWSiliconSwift"]
         )
     ],
