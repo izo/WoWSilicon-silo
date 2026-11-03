@@ -185,6 +185,105 @@ final class VersionStoreTests: XCTestCase {
         XCTAssertEqual(attributes[.modificationDate] as? Date, originalModificationDate)
     }
 
+    func testCorruptVersionsFileIsKeptAsBackupAndNeverOverwritten() throws {
+        let supportURL = try makeTemporaryDirectory()
+        let dir = supportURL.appendingPathComponent("SiloWow")
+        let versionsURL = dir.appendingPathComponent("versions.json")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let corrupt = "{ not json, my precious profiles"
+        try corrupt.write(to: versionsURL, atomically: true, encoding: .utf8)
+
+        let store = VersionStore(supportDirectory: supportURL)
+        let result = store.loadVersionManager()
+
+        XCTAssertTrue(result.decodeFailed)
+        XCTAssertFalse(result.persistenceBlocked)
+        let backup = try XCTUnwrap(result.corruptBackupURL)
+        XCTAssertTrue(backup.lastPathComponent.hasPrefix("versions.json.corrupt-"))
+        XCTAssertEqual(try String(contentsOf: backup, encoding: .utf8), corrupt)
+
+        // A later save writes the new file but leaves the backup untouched.
+        try store.save(manager: result.manager)
+        XCTAssertEqual(try String(contentsOf: backup, encoding: .utf8), corrupt)
+        XCTAssertFalse(try String(contentsOf: versionsURL, encoding: .utf8).contains("precious"))
+    }
+
+    func testTwoCorruptionsInTheSameSecondKeepBothBackups() throws {
+        let dir = try makeTemporaryDirectory().appendingPathComponent("SiloWow")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = dir.appendingPathComponent("versions.json")
+        let now = Date()
+        try "one".write(to: url, atomically: true, encoding: .utf8)
+        let first = CorruptFileBackup.preserve(url, now: now)
+        try "two".write(to: url, atomically: true, encoding: .utf8)
+        let second = CorruptFileBackup.preserve(url, now: now)
+
+        XCTAssertNotNil(first)
+        XCTAssertNotNil(second)
+        XCTAssertNotEqual(first, second)
+        XCTAssertEqual(try String(contentsOf: XCTUnwrap(first), encoding: .utf8), "one")
+        XCTAssertEqual(try String(contentsOf: XCTUnwrap(second), encoding: .utf8), "two")
+    }
+
+    func testUnknownProfileKindIsPreservedAndDoesNotBreakOtherProfiles() throws {
+        let supportURL = try makeTemporaryDirectory()
+        let store = VersionStore(supportDirectory: supportURL)
+        var manager = VersionManager.makeDefault()
+        var future = try XCTUnwrap(VersionManager.defaultVersions["wrathsilicon"])
+        future.id = "future"
+        future.displayName = "Future"
+        future.gamePath = "/Games/Future"
+        future.profileKind = .unknown("quantum_client")
+        var known = future
+        known.id = "known"
+        known.displayName = "Known"
+        known.gamePath = "/Games/Known"
+        known.profileKind = .genericD3D9
+        manager.versions["future"] = future
+        manager.versions["known"] = known
+        try store.save(manager: manager)
+
+        let raw = try String(contentsOf: supportURL.appendingPathComponent("SiloWow/versions.json"), encoding: .utf8)
+        XCTAssertTrue(raw.contains("\"quantum_client\""))
+
+        let result = store.loadVersionManager()
+        XCTAssertFalse(result.decodeFailed)
+        XCTAssertNil(result.corruptBackupURL)
+        XCTAssertEqual(result.manager.versions["known"]?.profileKind, .genericD3D9)
+        XCTAssertEqual(result.manager.versions["known"]?.gamePath, "/Games/Known")
+        XCTAssertEqual(result.manager.versions["future"]?.profileKind, .unknown("quantum_client"))
+        XCTAssertEqual(result.manager.versions["future"]?.gamePath, "/Games/Future")
+
+        // Round trip once more: still written unchanged.
+        try store.save(manager: result.manager)
+        let again = try String(contentsOf: supportURL.appendingPathComponent("SiloWow/versions.json"), encoding: .utf8)
+        XCTAssertEqual(raw, again)
+    }
+
+    func testKnownProfileKindsDecodeAsBefore() throws {
+        for kind in [GameProfileKind.worldOfWarcraft, .genericD3D9, .worldOfWarcraftX64] {
+            let data = try JSONEncoder().encode([kind])
+            XCTAssertEqual(try JSONDecoder().decode([GameProfileKind].self, from: data), [kind])
+            XCTAssertFalse(kind.isUnknown)
+        }
+        XCTAssertEqual(GameProfileKind(rawValue: "world_of_warcraft_x64"), .worldOfWarcraftX64)
+    }
+
+    func testUnknownProfileKindCannotBeLaunched() async throws {
+        var version = try XCTUnwrap(VersionManager.defaultVersions["wrathsilicon"])
+        version.gamePath = "/Games/Whatever"
+        version.profileKind = .unknown("quantum_client")
+        do {
+            try await LaunchService.shared.launch(version: version)
+            XCTFail("expected failure")
+        } catch let error as LaunchServiceError {
+            guard case .unsupportedProfileKind("quantum_client") = error else {
+                return XCTFail("wrong error \(error)")
+            }
+            XCTAssertTrue(error.localizedDescription.contains("cannot be launched"))
+        }
+    }
+
     private func makeTemporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("WoWSiliconSwiftTests-\(UUID().uuidString)", isDirectory: true)

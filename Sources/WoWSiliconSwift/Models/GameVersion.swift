@@ -416,11 +416,48 @@ enum OptimizationLevel: String, Codable, Sendable {
     case high
 }
 
-enum GameProfileKind: String, Codable, Sendable {
-    case worldOfWarcraft = "world_of_warcraft"
-    case genericD3D9 = "generic_d3d9"
+/// Profile family. Decoding is tolerant: a raw value this build does not know is kept in
+/// `.unknown` and written back unchanged, so a file saved by a newer build never loses a profile.
+enum GameProfileKind: Codable, Sendable, Equatable, Hashable {
+    case worldOfWarcraft
+    case genericD3D9
     /// 64-bit WoW client (BfA 8.x): no 32-bit patch DLLs, no x87, wined3d Vulkan renderer.
-    case worldOfWarcraftX64 = "world_of_warcraft_x64"
+    case worldOfWarcraftX64
+    /// A kind written by another build. The profile is kept but cannot be launched.
+    case unknown(String)
+
+    init(rawValue: String) {
+        switch rawValue {
+        case "world_of_warcraft": self = .worldOfWarcraft
+        case "generic_d3d9": self = .genericD3D9
+        case "world_of_warcraft_x64": self = .worldOfWarcraftX64
+        default: self = .unknown(rawValue)
+        }
+    }
+
+    var rawValue: String {
+        switch self {
+        case .worldOfWarcraft: return "world_of_warcraft"
+        case .genericD3D9: return "generic_d3d9"
+        case .worldOfWarcraftX64: return "world_of_warcraft_x64"
+        case .unknown(let value): return value
+        }
+    }
+
+    var isUnknown: Bool {
+        if case .unknown = self { return true }
+        return false
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.init(rawValue: try container.decode(String.self))
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(rawValue)
+    }
 }
 
 struct GameVersion: Codable, Identifiable, Equatable, Sendable {

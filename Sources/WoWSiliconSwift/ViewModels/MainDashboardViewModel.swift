@@ -59,6 +59,7 @@ final class MainDashboardViewModel: ObservableObject {
     let dependencies = DependencyStatusViewModel()
     let wineMigration = WineMigrationViewModel()
     private var versionManager: VersionManager
+    private var versionsPersistenceBlocked = false
     private var userPrefs: UserPrefs
     private var pendingVanillaTweaksLaunch = false
     private var launchTask: Task<Void, Never>?
@@ -83,12 +84,35 @@ final class MainDashboardViewModel: ObservableObject {
 
         let result = versionStore.loadVersionManager()
         versionManager = result.manager
+        versionsPersistenceBlocked = result.persistenceBlocked
+        var recoveryNotes: [String] = []
+        if let backup = result.corruptBackupURL {
+            recoveryNotes.append("versions.json could not be read. It was kept as \(backup.lastPathComponent) in \(backup.deletingLastPathComponent().path) and default profiles were loaded.")
+        } else if result.persistenceBlocked {
+            recoveryNotes.append("versions.json could not be read and could not be set aside. Your profiles will not be saved until you fix the file.")
+        }
 
         if !result.warnings.isEmpty {
             result.warnings.forEach { debugPrint("VersionStore warning: \($0)") }
         }
 
-        userPrefs = prefsStore.load()
+        let prefsReport = prefsStore.loadWithReport()
+        userPrefs = prefsReport.prefs
+        if let backup = prefsReport.corruptBackupURL {
+            recoveryNotes.append("prefs.json could not be read. It was kept as \(backup.lastPathComponent) and default preferences were loaded.")
+        }
+        if !recoveryNotes.isEmpty {
+            // Delayed so the view's onChange observer exists when the value is set.
+            let feedback = PatchFeedback(
+                title: "Settings Could Not Be Read",
+                message: recoveryNotes.joined(separator: "\n\n"),
+                isError: true
+            )
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(500))
+                self?.patchFeedback = feedback
+            }
+        }
         wineBottlePath = WineBottleService.currentBottleURL(prefs: userPrefs).path
         let wineBottlePrefsChanged = updateWineBottleMigrationPromptState()
         if wineBottlePrefsChanged {
@@ -1643,6 +1667,7 @@ final class MainDashboardViewModel: ObservableObject {
     }
 
     private func persistVersionManager() {
+        guard !versionsPersistenceBlocked else { return }
         do {
             try versionStore.save(manager: versionManager)
         } catch {

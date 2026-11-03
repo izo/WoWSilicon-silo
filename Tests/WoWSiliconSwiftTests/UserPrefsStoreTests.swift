@@ -43,6 +43,22 @@ final class UserPrefsStoreTests: XCTestCase {
         XCTAssertEqual(attributes[.modificationDate] as? Date, originalModificationDate)
     }
 
+    func testCorruptPrefsFileIsKeptAsBackupAndNotOverwritten() throws {
+        let supportURL = try makeTemporaryDirectory()
+        let dir = supportURL.appendingPathComponent("SiloWow")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try "{ broken".write(to: dir.appendingPathComponent("prefs.json"), atomically: true, encoding: .utf8)
+
+        let store = UserPrefsStore(supportDirectory: supportURL)
+        let report = store.loadWithReport()
+
+        XCTAssertEqual(report.prefs, .defaults)
+        let backup = try XCTUnwrap(report.corruptBackupURL)
+        XCTAssertTrue(backup.lastPathComponent.hasPrefix("prefs.json.corrupt-"))
+        XCTAssertEqual(try String(contentsOf: backup, encoding: .utf8), "{ broken")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: dir.appendingPathComponent("prefs.json").path))
+    }
+
     private func makeTemporaryDirectory() throws -> URL {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("WoWSiliconSwiftTests-\(UUID().uuidString)", isDirectory: true)

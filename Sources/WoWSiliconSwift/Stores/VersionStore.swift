@@ -5,6 +5,10 @@ struct VersionStore {
         var manager: VersionManager
         var warnings: [String]
         var decodeFailed: Bool = false
+        /// Where the unreadable `versions.json` was set aside, when decoding failed.
+        var corruptBackupURL: URL?
+        /// True when the unreadable file could not be set aside: the caller must not save over it.
+        var persistenceBlocked: Bool = false
         var requiresLegacyPrefsMigration: Bool = false
     }
 
@@ -35,6 +39,8 @@ struct VersionStore {
         var manager: VersionManager
         var loadedFromNewStore = false
         var decodeFailed = false
+        var corruptBackupURL: URL?
+        var persistenceBlocked = false
         if fileManager.fileExists(atPath: versionsURL.path) {
             do {
                 let data = try Data(contentsOf: versionsURL)
@@ -44,6 +50,13 @@ struct VersionStore {
                 warnings.append("Failed to load versions.json: \(error.localizedDescription)")
                 manager = VersionManager.makeDefault()
                 decodeFailed = true
+                if let backup = CorruptFileBackup.preserve(versionsURL, fileManager: fileManager) {
+                    corruptBackupURL = backup
+                    warnings.append("Unreadable versions.json kept as \(backup.lastPathComponent).")
+                } else {
+                    persistenceBlocked = true
+                    warnings.append("Could not set aside the unreadable versions.json; it will not be overwritten.")
+                }
             }
         } else {
             manager = VersionManager.makeDefault()
@@ -61,7 +74,7 @@ struct VersionStore {
 
         manager.ensureDefaults()
 
-        if mergedFromLegacy {
+        if mergedFromLegacy && !persistenceBlocked {
             do {
                 try save(manager: manager)
             } catch {
@@ -73,6 +86,8 @@ struct VersionStore {
             manager: manager,
             warnings: warnings,
             decodeFailed: decodeFailed,
+            corruptBackupURL: corruptBackupURL,
+            persistenceBlocked: persistenceBlocked,
             requiresLegacyPrefsMigration: !loadedFromNewStore
         )
     }

@@ -53,6 +53,7 @@ enum LaunchServiceError: LocalizedError {
     case processLaunchFailed(String)
     case appleScriptFailed(String)
     case versionMismatch(String, String)
+    case unsupportedProfileKind(String)
 
     var errorDescription: String? {
         switch self {
@@ -87,6 +88,8 @@ enum LaunchServiceError: LocalizedError {
             return reason
         case .appleScriptFailed(let reason):
             return "Failed to launch in Terminal: \(reason)"
+        case .unsupportedProfileKind(let kind):
+            return "This profile uses the type \"\(kind)\", which this version of SiloWow does not know. The profile is kept as is, but it cannot be launched. Update SiloWow to use it."
         case .versionMismatch(let base, let tweaked):
             return "Build mismatch detected.\n\nWoW.exe: \(base)\nWoW_tweaked.exe: \(tweaked)\n\nWoWSilicon can re-generate the tweaked executable for you."
         }
@@ -188,6 +191,9 @@ final class LaunchService: @unchecked Sendable {
         performPrelaunchActions: Bool = true,
         winePrefixURL: URL = WineRegistrySupport.winePrefixURL()
     ) throws -> LaunchConfiguration {
+        if case .unknown(let kind) = version.profileKind {
+            throw LaunchServiceError.unsupportedProfileKind(kind)
+        }
         let trimmedGame = version.gamePath.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedGame.isEmpty, let gameURL = version.gameDirectoryURL else { throw LaunchServiceError.gamePathMissing }
 

@@ -11,19 +11,31 @@ struct UserPrefsStore {
         self.supportDirectory = supportDirectory
     }
 
+    struct LoadResult {
+        var prefs: UserPrefs
+        /// Where the unreadable `prefs.json` was set aside, when decoding failed.
+        var corruptBackupURL: URL?
+    }
+
     func load() -> UserPrefs {
+        loadWithReport().prefs
+    }
+
+    func loadWithReport() -> LoadResult {
         guard let prefsURL = prefsFileURL(),
               fileManager.fileExists(atPath: prefsURL.path) else {
-            return .defaults
+            return LoadResult(prefs: .defaults)
         }
 
         do {
             let data = try Data(contentsOf: prefsURL)
             let prefs = try JSONDecoder().decode(UserPrefs.self, from: data)
-            return prefs
+            return LoadResult(prefs: prefs)
         } catch {
             debugPrint("Failed to load prefs.json: \(error.localizedDescription)")
-            return .defaults
+            // Set the file aside so the next save cannot overwrite it with defaults.
+            let backup = CorruptFileBackup.preserve(prefsURL, fileManager: fileManager)
+            return LoadResult(prefs: .defaults, corruptBackupURL: backup)
         }
     }
 
