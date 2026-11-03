@@ -15,7 +15,7 @@ enum VanillaTweaksError: LocalizedError {
         case .wowExecutableMissing(let path):
             return "WoW.exe not found at \(path)."
         case .wineMissing(let path):
-            return "Bundled Wine executable not found at \(path). Reinstall WoWSilicon and try again."
+            return "Bundled Wine executable not found at \(path). Reinstall SiloWow and try again."
         case .executionFailed(let message):
             return message
         case .outputMissing(let output):

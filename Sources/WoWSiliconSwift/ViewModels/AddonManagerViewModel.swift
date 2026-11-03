@@ -79,7 +79,7 @@ final class AddonManagerViewModel: ObservableObject, Identifiable {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = "Git is required for addon management"
-        alert.informativeText = "WoWSilicon uses Git to install, check, and update addon repositories. Install Apple's Command Line Tools to add Git to this Mac."
+        alert.informativeText = "SiloWow uses Git to install, check, and update addon repositories. Install Apple's Command Line Tools to add Git to this Mac."
         alert.addButton(withTitle: "Install Git")
         alert.addButton(withTitle: "Not Now")
 

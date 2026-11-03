@@ -28,7 +28,7 @@ enum AudioOutputServiceError: LocalizedError {
         case .wineRuntimeMissing:
             return "The bundled Wine runtime could not be found."
         case .helperMissing:
-            return "The Wine audio helper is missing. Reinstall WoWSilicon and try again."
+            return "The Wine audio helper is missing. Reinstall SiloWow and try again."
         case .commandFailed(let message):
             return message
         }

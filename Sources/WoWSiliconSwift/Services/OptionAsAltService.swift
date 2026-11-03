@@ -8,7 +8,7 @@ enum OptionAsAltServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .wineMissing:
-            return "Bundled Wine executable not found. Reinstall WoWSilicon and try again."
+            return "Bundled Wine executable not found. Reinstall SiloWow and try again."
         case .commandFailed(let output):
             return output.isEmpty ? "Failed to update Wine registry." : output
         case .registryWriteFailed(let reason):

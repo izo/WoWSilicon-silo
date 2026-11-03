@@ -44,7 +44,7 @@ final class VersionStoreTests: XCTestCase {
 
     func testLoadFallsBackToDefaultsWhenVersionsFileIsInvalid() throws {
         let supportURL = try makeTemporaryDirectory()
-        let versionsURL = supportURL.appendingPathComponent("WoWSilicon/versions.json")
+        let versionsURL = supportURL.appendingPathComponent("SiloWow/versions.json")
         try FileManager.default.createDirectory(at: versionsURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try "{ not json".write(to: versionsURL, atomically: true, encoding: .utf8)
 
@@ -58,7 +58,7 @@ final class VersionStoreTests: XCTestCase {
 
     func testLoadMergesLegacyVersionManagerWhenNewStoreHasNoPaths() throws {
         let supportURL = try makeTemporaryDirectory()
-        let legacyURL = supportURL.appendingPathComponent("WoWSilicon/version_manager.json")
+        let legacyURL = supportURL.appendingPathComponent("SiloWow/version_manager.json")
         try FileManager.default.createDirectory(at: legacyURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try """
         {
@@ -170,7 +170,7 @@ final class VersionStoreTests: XCTestCase {
         let supportURL = try makeTemporaryDirectory()
         let store = VersionStore(supportDirectory: supportURL)
         let manager = VersionManager.makeDefault()
-        let versionsURL = supportURL.appendingPathComponent("WoWSilicon/versions.json")
+        let versionsURL = supportURL.appendingPathComponent("SiloWow/versions.json")
 
         try store.save(manager: manager)
         let originalModificationDate = Date(timeIntervalSince1970: 1_000_000)

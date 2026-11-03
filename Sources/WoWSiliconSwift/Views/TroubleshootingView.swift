@@ -61,7 +61,7 @@ struct TroubleshootingView: View {
     private var permissionsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Permissions & Access").font(.headline)
-            Text("These checks verify effective file access. macOS does not let WoWSilicon read the Privacy & Security switches directly.")
+            Text("These checks verify effective file access. macOS does not let SiloWow read the Privacy & Security switches directly.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -126,7 +126,7 @@ struct TroubleshootingView: View {
             Button("Delete vanilla-tweaks", action: viewModel.deleteVanillaTweaks)
                 .buttonStyle(.bordered)
             Button(role: .destructive, action: viewModel.resetApplicationSupport) {
-                Text("Reset WoWSilicon (delete config)")
+                Text("Reset SiloWow (delete config)")
             }
             .buttonStyle(.borderedProminent)
         }

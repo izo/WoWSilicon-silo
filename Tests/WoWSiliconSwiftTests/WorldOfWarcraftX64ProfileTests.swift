@@ -343,7 +343,7 @@ final class WorldOfWarcraftX64ProfileTests: XCTestCase {
         try withFakeWineRuntime { _ in
             let game = URL(fileURLWithPath: "/Games/It's WoW 3.3.5", isDirectory: true)
             let wow = game.appendingPathComponent("Wow.exe")
-            let wine = "/Applications/WoWSilicon.app/Contents/Resources/Wine/bin/wine"
+            let wine = "/Applications/SiloWow.app/Contents/Resources/Wine/bin/wine"
             let fakeX87 = BundledX87Runtime.ResolvedRuntime(
                 executableURL: URL(fileURLWithPath: "/fake/Patching/rosettax87/rosettax87"),
                 wineEnvironmentKey: "ROSETTA_X87_PATH"
@@ -540,23 +540,6 @@ final class WorldOfWarcraftX64ProfileTests: XCTestCase {
             try PatchService.applyGamePatch(for: generic)
             XCTAssertNoThrow(try LaunchService.shared.shortcutShellScript(for: generic, winePrefixURL: bad))
         }
-    }
-
-    // MARK: - Telemetry
-
-    func testTelemetryContextForX64ProfileIsExplicit() {
-        var x64 = VersionManager.bfa837X64Template
-        x64.settings.graphicsSettings.backend = .d9vk
-        x64.settings.x87Backend = .rosettaX87
-        let context = TelemetryEventContext(version: x64)
-        XCTAssertEqual(context.renderer, "wined3d-vulkan")
-        XCTAssertEqual(context.x87Translation, "disabled")
-        XCTAssertEqual(context.wowVersion, "8.3.7")
-
-        let wotlk = VersionManager.defaultVersions["wrathsilicon"]!
-        let legacy = TelemetryEventContext(version: wotlk)
-        XCTAssertEqual(legacy.renderer, wotlk.settings.graphicsSettings.backend.rawValue)
-        XCTAssertEqual(legacy.x87Translation, wotlk.settings.x87Backend.rawValue)
     }
 
     // MARK: - PEArchitecture

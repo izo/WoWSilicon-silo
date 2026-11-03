@@ -67,7 +67,7 @@ final class TroubleshootingViewModel: ObservableObject, Identifiable {
 #if canImport(AppKit)
         let panel = NSOpenPanel()
         panel.title = "Re-select Game Executable"
-        panel.message = "Select the configured game executable to grant WoWSilicon access again."
+        panel.message = "Select the configured game executable to grant SiloWow access again."
         panel.prompt = "Grant Access"
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
@@ -95,7 +95,7 @@ final class TroubleshootingViewModel: ObservableObject, Identifiable {
 #if canImport(AppKit)
         guard let url = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension") else { return }
         if !NSWorkspace.shared.open(url) {
-            alert = ManagerAlert(message: "Open System Settings > Privacy & Security, then review Files & Folders and App Management for WoWSilicon.")
+            alert = ManagerAlert(message: "Open System Settings > Privacy & Security, then review Files & Folders and App Management for SiloWow.")
         }
 #endif
     }
@@ -128,9 +128,9 @@ final class TroubleshootingViewModel: ObservableObject, Identifiable {
     }
 
     func resetApplicationSupport() {
-        perform(action: "Resetting WoWSilicon…") {
+        perform(action: "Resetting SiloWow…") {
             try TroubleshootingService.resetApplicationSupport()
-            return "WoWSilicon configuration removed. Please restart the app."
+            return "SiloWow configuration removed. Please restart the app."
         }
     }
 

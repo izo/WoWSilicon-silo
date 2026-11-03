@@ -140,7 +140,7 @@ struct MainDashboardView: View {
                 viewModel.handleMigration(migrate: true)
             }
         } message: {
-            Text("A previous TurtleSilicon installation was detected. Would you like to migrate your settings to WoWSilicon?")
+            Text("A previous TurtleSilicon installation was detected. Would you like to migrate your settings to SiloWow?")
         }
         .alert("Copy Existing Wine Bottle?", isPresented: $viewModel.shouldShowWineBottleMigrationPrompt) {
             Button("Start Fresh", role: .cancel) {
@@ -150,17 +150,7 @@ struct MainDashboardView: View {
                 viewModel.handleWineBottleMigration(copyLegacyBottle: true)
             }
         } message: {
-            Text("An existing ~/.wine bottle was found. WoWSilicon can copy it to ~/WoWSilicon. The original bottle will be kept, so other Wine applications can continue using it.")
-        }
-        .alert("Share Anonymous Stats?", isPresented: $viewModel.shouldShowTelemetryConsentPrompt) {
-            Button("No Thanks", role: .cancel) {
-                viewModel.handleTelemetryConsent(accepted: false)
-            }
-            Button("Share Anonymous Stats") {
-                viewModel.handleTelemetryConsent(accepted: true)
-            }
-        } message: {
-            Text("Help us show anonymous WoWSilicon usage stats, like how many people use the launcher, which WoW versions are used, macOS version, renderer, x87 translation, and configured realmlist server. We do not collect your IP address, username, account name, character name, file paths, or hardware identifiers.")
+            Text("An existing ~/.wine bottle was found. SiloWow can copy it to ~/WoWSilicon. The original bottle will be kept, so other Wine applications can continue using it.")
         }
         .alert("Rosetta 2 Required", isPresented: $viewModel.shouldShowRosettaInstallPrompt) {
             Button("Not Now", role: .cancel) {
@@ -170,7 +160,7 @@ struct MainDashboardView: View {
                 viewModel.handleRosettaInstallPrompt(install: true)
             }
         } message: {
-            Text("Rosetta 2 is not installed. WoWSilicon needs it to run Intel components on Apple silicon. Install it before launching a game.")
+            Text("Rosetta 2 is not installed. SiloWow needs it to run Intel components on Apple silicon. Install it before launching a game.")
         }
         .alert("Apply vanilla-tweaks?", isPresented: $vanillaTweaksAlert) {
             Button("Cancel", role: .cancel) {
@@ -180,7 +170,7 @@ struct MainDashboardView: View {
                 viewModel.handleVanillaTweaksConfirmation(apply: true)
             }
         } message: {
-            Text("WoW_tweaked.exe was not found. WoWSilicon can run vanilla-tweaks automatically before launching. Proceed?")
+            Text("WoW_tweaked.exe was not found. SiloWow can run vanilla-tweaks automatically before launching. Proceed?")
         }
         .alert("Build mismatch detected", isPresented: $versionMismatchAlert) {
             Button("Cancel", role: .cancel) {

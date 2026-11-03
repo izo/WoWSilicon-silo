@@ -2,7 +2,7 @@ import Foundation
 
 enum MigrationService {
     static let legacyDirectoryName = "TurtleSilicon"
-    static let currentDirectoryName = "WoWSilicon"
+    static let currentDirectoryName = AppIdentityMigration.currentSupportDirectoryName
 
     static func legacyDirectoryExists() -> Bool {
         guard let support = applicationSupportURL() else { return false }

@@ -114,9 +114,6 @@ struct OptionsView: View {
             Divider()
                 .padding(.vertical, 4)
             launchShortcutControls
-            Divider()
-                .padding(.vertical, 4)
-            telemetryControls
             Button("Check for Updates...") {
                 UpdaterService.shared.checkForUpdates()
             }
@@ -182,7 +179,7 @@ struct OptionsView: View {
                     Label("Multiple realmlist.wtf files detected", systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                         .font(.headline)
-                    Text("WoWSilicon found more than one realmlist.wtf in your game folder. Remove the duplicates so only one remains, then reopen this tab.")
+                    Text("SiloWow found more than one realmlist.wtf in your game folder. Remove the duplicates so only one remains, then reopen this tab.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     ForEach(realmlistMultipleURLs, id: \.path) { url in
@@ -437,19 +434,6 @@ struct OptionsView: View {
             Toggle("", isOn: viewModel.normalizeAudioBinding())
                 .labelsHidden()
                 .toggleStyle(.switch)
-        }
-    }
-
-    private var telemetryControls: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            toggleRow(
-                "Share Anonymous Usage Statistics",
-                binding: viewModel.telemetryEnabledBinding()
-            )
-            Text("Shares app version, WoW version, macOS version, renderer, x87 translation, and configured realmlist server for public aggregate stats. No IP address, username, account name, character name, file paths, or hardware identifiers are collected.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

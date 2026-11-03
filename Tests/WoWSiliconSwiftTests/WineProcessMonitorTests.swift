@@ -4,16 +4,16 @@ import XCTest
 final class WineProcessMonitorTests: XCTestCase {
     func testRecognizesBundledWineAndWindowsChildProcesses() {
         let processList = #"""
-          101 /Applications/WoWSilicon.app/Contents/Resources/Wine/bin/wine Z:\Games\WoW.exe
+          101 /Applications/SiloWow.app/Contents/Resources/Wine/bin/wine Z:\Games\WoW.exe
           102 C:\windows\system32\services.exe
           103 Z:\Games\WoW.exe
-          104 /Applications/WoWSilicon.app/Contents/Resources/Patching/x87sidecar/x87sidecar /Applications/WoWSilicon.app/Contents/Resources/Wine/bin/wine Z:\Games\WoW.exe
-          105 /Applications/WoWSilicon.app/Contents/Resources/Patching/rosettax87/rosettax87 /Applications/WoWSilicon.app/Contents/Resources/Wine/bin/wine
+          104 /Applications/SiloWow.app/Contents/Resources/Patching/x87sidecar/x87sidecar /Applications/SiloWow.app/Contents/Resources/Wine/bin/wine Z:\Games\WoW.exe
+          105 /Applications/SiloWow.app/Contents/Resources/Patching/rosettax87/rosettax87 /Applications/SiloWow.app/Contents/Resources/Wine/bin/wine
         """#
 
         let result = WineProcessMonitor.processIDs(
             in: processList,
-            runtimeRoot: "/Applications/WoWSilicon.app/Contents/Resources/Wine"
+            runtimeRoot: "/Applications/SiloWow.app/Contents/Resources/Wine"
         )
 
         XCTAssertEqual(result, [101, 102, 103, 104, 105])
@@ -49,12 +49,12 @@ final class WineProcessMonitorTests: XCTestCase {
           301 /Applications/VeraCrypt.app/Contents/MacOS/VeraCrypt
           302 /bin/ps -axo pid=,command=
           303 /usr/bin/editor /Users/test/readme.exe
-          304 /Applications/WoWSilicon.app/Contents/MacOS/WoWSilicon
+          304 /Applications/SiloWow.app/Contents/MacOS/SiloWow
         """
 
         let result = WineProcessMonitor.processIDs(
             in: processList,
-            runtimeRoot: "/Applications/WoWSilicon.app/Contents/Resources/Wine"
+            runtimeRoot: "/Applications/SiloWow.app/Contents/Resources/Wine"
         )
 
         XCTAssertTrue(result.isEmpty)
@@ -73,17 +73,17 @@ final class WineProcessMonitorTests: XCTestCase {
 
     func testApplicationProcessesExcludeWineInfrastructureAndAudioHelper() {
         let processList = #"""
-          501 /Applications/WoWSilicon.app/Contents/Resources/Wine/bin/wineserver
+          501 /Applications/SiloWow.app/Contents/Resources/Wine/bin/wineserver
           502 services.exe
           503 C:\windows\system32\winedevice.exe
-          504 /Applications/WoWSilicon.app/Contents/Resources/Wine/bin/wine /Applications/WoWSilicon.app/Contents/Resources/Audio/wowsilicon-audio.exe snapshot
-          505 /Applications/WoWSilicon.app/Contents/Resources/Wine/bin/wine /Volumes/Games/Wow.exe
+          504 /Applications/SiloWow.app/Contents/Resources/Wine/bin/wine /Applications/SiloWow.app/Contents/Resources/Audio/wowsilicon-audio.exe snapshot
+          505 /Applications/SiloWow.app/Contents/Resources/Wine/bin/wine /Volumes/Games/Wow.exe
           506 Z:\Volumes\Games\Wow_tweaked.exe
         """#
 
         let result = WineProcessMonitor.applicationProcessIDs(
             in: processList,
-            runtimeRoot: "/Applications/WoWSilicon.app/Contents/Resources/Wine"
+            runtimeRoot: "/Applications/SiloWow.app/Contents/Resources/Wine"
         )
 
         XCTAssertEqual(result, [505, 506])

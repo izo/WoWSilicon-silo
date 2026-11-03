@@ -306,7 +306,7 @@ enum TroubleshootingService {
 
     static func resetApplicationSupport() throws {
         let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            .appendingPathComponent("WoWSilicon", isDirectory: true)
+            .appendingPathComponent(AppIdentityMigration.currentSupportDirectoryName, isDirectory: true)
         guard FileManager.default.fileExists(atPath: support.path) else {
             throw TroubleshootingServiceError.nothingToDelete
         }
@@ -320,11 +320,11 @@ enum TroubleshootingService {
         permissionChecks: [PermissionAccessCheck]? = nil,
         wineBottleURL: URL = WineRegistrySupport.winePrefixURL()
     ) -> (full: String, preview: String) {
-        var baseLog = "=== WoWSilicon Debug Log ===\n"
+        var baseLog = "=== SiloWow Debug Log ===\n"
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         baseLog += "Generated: \(formatter.string(from: Date()))\n"
-        baseLog += "WoWSilicon Version: \(appVersion)\n\n"
+        baseLog += "SiloWow Version: \(appVersion)\n\n"
 
         baseLog += "=== System Information ===\n"
         baseLog += "OS: macOS\n"
@@ -339,7 +339,7 @@ enum TroubleshootingService {
             baseLog += "macOS Version:\n\(swVers)\n"
         }
 
-        baseLog += "\n=== WoWSilicon Configuration ===\n"
+        baseLog += "\n=== SiloWow Configuration ===\n"
         if let version = context.currentVersion {
             baseLog += "Current Game Version: \(version.displayName) (\(version.id))\n"
             baseLog += "Profile Type: \(version.profileKind.rawValue)\n"

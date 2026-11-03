@@ -6,9 +6,6 @@ struct UserPrefs: Codable, Equatable {
     var enableMetalHud: Bool
     var enableVanillaTweaks: Bool
     var autoDeleteWdb: Bool
-    var telemetryEnabled: Bool
-    var telemetryConsentAsked: Bool
-    var telemetryInstallID: String
     var environmentVariables: String
     var vanillaTweaksParameters: String
     var x87Backend: X87Backend
@@ -26,9 +23,6 @@ struct UserPrefs: Codable, Equatable {
         enableMetalHud: false,
         enableVanillaTweaks: false,
         autoDeleteWdb: true,
-        telemetryEnabled: false,
-        telemetryConsentAsked: false,
-        telemetryInstallID: UUID().uuidString,
         environmentVariables: "",
         vanillaTweaksParameters: "",
         x87Backend: .rosettaX87,
@@ -42,9 +36,6 @@ struct UserPrefs: Codable, Equatable {
         case enableMetalHud = "enable_metal_hud"
         case enableVanillaTweaks = "enable_vanilla_tweaks"
         case autoDeleteWdb = "auto_delete_wdb"
-        case telemetryEnabled = "telemetry_enabled"
-        case telemetryConsentAsked = "telemetry_consent_asked"
-        case telemetryInstallID = "telemetry_install_id"
         case environmentVariables = "environment_variables"
         case vanillaTweaksParameters = "vanilla_tweaks_parameters"
         case x87Backend = "x87_backend"
@@ -59,9 +50,6 @@ struct UserPrefs: Codable, Equatable {
         enableMetalHud: Bool = false,
         enableVanillaTweaks: Bool = false,
         autoDeleteWdb: Bool = true,
-        telemetryEnabled: Bool = false,
-        telemetryConsentAsked: Bool = false,
-        telemetryInstallID: String = UUID().uuidString,
         environmentVariables: String = "",
         vanillaTweaksParameters: String = "",
         enableRosettaX87: Bool = true,
@@ -74,9 +62,6 @@ struct UserPrefs: Codable, Equatable {
         self.enableMetalHud = enableMetalHud
         self.enableVanillaTweaks = enableVanillaTweaks
         self.autoDeleteWdb = autoDeleteWdb
-        self.telemetryEnabled = telemetryEnabled
-        self.telemetryConsentAsked = telemetryConsentAsked
-        self.telemetryInstallID = telemetryInstallID
         self.environmentVariables = environmentVariables
         self.vanillaTweaksParameters = vanillaTweaksParameters
         self.x87Backend = x87Backend ?? (enableRosettaX87 ? .rosettaX87 : .disabled)
@@ -91,9 +76,6 @@ struct UserPrefs: Codable, Equatable {
         enableMetalHud = try container.decodeIfPresent(Bool.self, forKey: .enableMetalHud) ?? false
         enableVanillaTweaks = try container.decodeIfPresent(Bool.self, forKey: .enableVanillaTweaks) ?? false
         autoDeleteWdb = try container.decodeIfPresent(Bool.self, forKey: .autoDeleteWdb) ?? true
-        telemetryEnabled = try container.decodeIfPresent(Bool.self, forKey: .telemetryEnabled) ?? false
-        telemetryConsentAsked = try container.decodeIfPresent(Bool.self, forKey: .telemetryConsentAsked) ?? false
-        telemetryInstallID = try container.decodeIfPresent(String.self, forKey: .telemetryInstallID) ?? UUID().uuidString
         environmentVariables = try container.decodeIfPresent(String.self, forKey: .environmentVariables) ?? ""
         vanillaTweaksParameters = try container.decodeIfPresent(String.self, forKey: .vanillaTweaksParameters) ?? ""
         wineBottlePath = try container.decodeIfPresent(String.self, forKey: .wineBottlePath) ?? ""
@@ -113,9 +95,6 @@ struct UserPrefs: Codable, Equatable {
         try container.encode(enableMetalHud, forKey: .enableMetalHud)
         try container.encode(enableVanillaTweaks, forKey: .enableVanillaTweaks)
         try container.encode(autoDeleteWdb, forKey: .autoDeleteWdb)
-        try container.encode(telemetryEnabled, forKey: .telemetryEnabled)
-        try container.encode(telemetryConsentAsked, forKey: .telemetryConsentAsked)
-        try container.encode(telemetryInstallID, forKey: .telemetryInstallID)
         try container.encode(environmentVariables, forKey: .environmentVariables)
         try container.encode(vanillaTweaksParameters, forKey: .vanillaTweaksParameters)
         try container.encode(x87Backend, forKey: .x87Backend)

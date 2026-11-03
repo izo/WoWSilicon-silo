@@ -106,7 +106,7 @@ struct RealmlistEditorView: View {
                     .foregroundStyle(.secondary)
                 Text("No realm servers configured")
                     .font(.headline)
-                Text("Add a server address to start switching realms from WoWSilicon.")
+                Text("Add a server address to start switching realms from SiloWow.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

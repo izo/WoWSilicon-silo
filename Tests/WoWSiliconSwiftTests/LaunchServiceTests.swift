@@ -4,8 +4,8 @@ import Darwin
 
 final class LaunchServiceTests: XCTestCase {
     func testWineFocusMatcherAcceptsOnlyOneNewBundledRuntimeApplication() {
-        let runtimeRoot = URL(fileURLWithPath: "/Applications/WoWSilicon.app/Contents/Resources/Wine")
-        let x87Runtime = URL(fileURLWithPath: "/Applications/WoWSilicon.app/Contents/Resources/Patching/rosettax87/rosettax87")
+        let runtimeRoot = URL(fileURLWithPath: "/Applications/SiloWow.app/Contents/Resources/Wine")
+        let x87Runtime = URL(fileURLWithPath: "/Applications/SiloWow.app/Contents/Resources/Patching/rosettax87/rosettax87")
         var matcher = WineApplicationFocusMatcher(
             baselineProcessIDs: [10],
             runtimeRootURL: runtimeRoot,
@@ -22,7 +22,7 @@ final class LaunchServiceTests: XCTestCase {
         ))
         XCTAssertFalse(matcher.accepts(
             processIdentifier: 12,
-            executableURL: URL(fileURLWithPath: "/Applications/WoWSilicon.app/Contents/Resources/WineOther/bin/wine")
+            executableURL: URL(fileURLWithPath: "/Applications/SiloWow.app/Contents/Resources/WineOther/bin/wine")
         ))
         XCTAssertTrue(matcher.accepts(
             processIdentifier: 13,
@@ -35,8 +35,8 @@ final class LaunchServiceTests: XCTestCase {
     }
 
     func testWineFocusMatcherAcceptsConfiguredX87WrapperOnlyByExactPath() {
-        let runtimeRoot = URL(fileURLWithPath: "/Applications/WoWSilicon.app/Contents/Resources/Wine")
-        let x87Runtime = URL(fileURLWithPath: "/Applications/WoWSilicon.app/Contents/Resources/Patching/rosettax87/rosettax87")
+        let runtimeRoot = URL(fileURLWithPath: "/Applications/SiloWow.app/Contents/Resources/Wine")
+        let x87Runtime = URL(fileURLWithPath: "/Applications/SiloWow.app/Contents/Resources/Patching/rosettax87/rosettax87")
         var matcher = WineApplicationFocusMatcher(
             baselineProcessIDs: [],
             runtimeRootURL: runtimeRoot,

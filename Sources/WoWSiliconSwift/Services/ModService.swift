@@ -56,7 +56,7 @@ enum ModServiceError: LocalizedError {
         case .invalidModFile(let path):
             return "Only DLL files can be installed as mods: \(path)"
         case .protectedMod(let name):
-            return "\(name) is managed by WoWSilicon and cannot be replaced from the Mod Manager."
+            return "\(name) is managed by SiloWow and cannot be replaced from the Mod Manager."
         case .copyFailed(let reason):
             return reason
         case .writeFailed(let reason):

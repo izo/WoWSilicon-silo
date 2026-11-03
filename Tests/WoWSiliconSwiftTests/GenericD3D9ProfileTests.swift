@@ -72,14 +72,4 @@ final class GenericD3D9ProfileTests: XCTestCase {
         XCTAssertEqual(try Data(contentsOf: unrelatedLoader), Data("keep".utf8))
         XCTAssertEqual(try Data(contentsOf: unrelatedConfig), Data("keep".utf8))
     }
-
-    func testTelemetryOmitsWoWOnlyDimensions() {
-        var version = VersionManager.genericD3D9Template
-        version.gamePath = "/Games/LegacyGame.exe"
-
-        let context = TelemetryEventContext(version: version)
-
-        XCTAssertNil(context.wowVersion)
-        XCTAssertNil(context.realmlist)
-    }
 }

@@ -8,12 +8,17 @@ struct WoWSiliconSwiftApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var viewModel = MainDashboardViewModel()
 
+    init() {
+        AppIdentityMigration.copyLegacySupportDirectoryIfNeeded()
+        AppIdentityMigration.migrateLegacyDefaultsIfNeeded()
+    }
+
     var body: some Scene {
-        Window("WoWSilicon", id: "main") {
+        Window("SiloWow", id: "main") {
             MainDashboardView(viewModel: viewModel, wineMigration: viewModel.wineMigration)
                 .frame(width: windowWidth, height: windowHeight)
                 .background(WindowConfigurator(
-                    title: "WoWSilicon v\(appVersion)",
+                    title: "SiloWow v\(appVersion)",
                     width: windowWidth,
                     height: windowHeight
                 ))

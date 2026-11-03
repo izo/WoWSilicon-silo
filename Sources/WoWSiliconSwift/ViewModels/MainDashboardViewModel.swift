@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class MainDashboardViewModel: ObservableObject {
-    @Published private(set) var versionDisplayName: String = "WoWSilicon"
+    @Published private(set) var versionDisplayName: String = "SiloWow"
     @Published private(set) var subtitleText: String = "Launch World Of Warcraft from 2006-2010 on Apple Silicon Macs"
 
     @Published private(set) var gamePathStatus = StatusValue(text: "Not set", level: .error)
@@ -32,7 +32,6 @@ final class MainDashboardViewModel: ObservableObject {
     @Published private(set) var versionMismatchData: (base: String, tweaked: String)?
     @Published var shouldShowMigrationPrompt: Bool = false
     @Published var shouldShowWineBottleMigrationPrompt: Bool = false
-    @Published var shouldShowTelemetryConsentPrompt: Bool = false
     @Published private(set) var wineBottlePath: String = ""
     @Published private(set) var audioOutputDevices: [WineAudioOutputDevice] = []
     @Published private(set) var audioInputDevices: [WineAudioOutputDevice] = []
@@ -69,7 +68,6 @@ final class MainDashboardViewModel: ObservableObject {
     private var patchStatusRefreshID = 0
     private var optionAsAltStatusRefreshID = 0
     private var retinaModeStatusRefreshID = 0
-    private var didRecordLaunchTelemetry = false
     static let allowedCursorSizeMultipliers = [1, 2, 4]
 
     private static func normalizedCursorSizeMultiplier(_ value: Int) -> Int {
@@ -91,13 +89,11 @@ final class MainDashboardViewModel: ObservableObject {
         }
 
         userPrefs = prefsStore.load()
-        let telemetryPrefsChanged = normalizeTelemetryPrefs()
         wineBottlePath = WineBottleService.currentBottleURL(prefs: userPrefs).path
         let wineBottlePrefsChanged = updateWineBottleMigrationPromptState()
-        if telemetryPrefsChanged || wineBottlePrefsChanged {
+        if wineBottlePrefsChanged {
             persistUserPrefs()
         }
-        TelemetryService.shared.setClientTelemetryEnabled(userPrefs.telemetryEnabled)
 
         if !shouldShowMigrationPrompt && !result.decodeFailed {
             if result.requiresLegacyPrefsMigration {
@@ -107,8 +103,6 @@ final class MainDashboardViewModel: ObservableObject {
         }
 
         refreshSnapshot()
-        updateTelemetryConsentPromptState()
-        recordLaunchTelemetryIfNeeded()
     }
 
     func selectVersion(id: String) {
@@ -315,7 +309,6 @@ final class MainDashboardViewModel: ObservableObject {
 
             if !isForceQuittingWine, !isAudioOutputBusy, let processCount {
                 wineProcessCount = processCount
-                TelemetryService.shared.updateGameRunning(processCount > 0)
             }
 
             let interval = Self.wineProcessPollingIntervalSeconds(
@@ -462,46 +455,35 @@ final class MainDashboardViewModel: ObservableObject {
         let result = versionStore.loadVersionManager()
         versionManager = result.manager
         userPrefs = prefsStore.load()
-        normalizeTelemetryPrefs()
         wineBottlePath = WineBottleService.currentBottleURL(prefs: userPrefs).path
-        TelemetryService.shared.setClientTelemetryEnabled(userPrefs.telemetryEnabled)
         migrateLegacyPrefsToCurrentVersion()
         persistVersionManager()
         refreshSnapshot()
-        updateTelemetryConsentPromptState()
-        recordLaunchTelemetryIfNeeded()
         refreshOptionAsAltStatus()
         refreshRetinaModeStatus()
         updateWineBottleMigrationPromptState()
         persistUserPrefs()
-        updateTelemetryConsentPromptState()
         startWineProfileMigrationIfNeeded()
     }
 
     func startWineProfileMigrationIfNeeded() {
         let bottleURL = WineBottleService.currentBottleURL(prefs: userPrefs)
         let blocked = shouldShowMigrationPrompt || shouldShowWineBottleMigrationPrompt
-        let task = wineMigration.startProfileMigration(
+        _ = wineMigration.startProfileMigration(
             bottleURL: bottleURL,
             blocked: blocked,
             completion: handleWineProfileMigrationOutcome
         )
-        if task != nil {
-            shouldShowTelemetryConsentPrompt = false
-        }
     }
 
     func retryWineProfileMigration() {
         let bottleURL = WineBottleService.currentBottleURL(prefs: userPrefs)
         let blocked = shouldShowMigrationPrompt || shouldShowWineBottleMigrationPrompt
-        let task = wineMigration.retryProfileMigration(
+        _ = wineMigration.retryProfileMigration(
             bottleURL: bottleURL,
             blocked: blocked,
             completion: handleWineProfileMigrationOutcome
         )
-        if task != nil {
-            shouldShowTelemetryConsentPrompt = false
-        }
     }
 
     func handleWineBottleMigration(copyLegacyBottle: Bool) {
@@ -509,7 +491,6 @@ final class MainDashboardViewModel: ObservableObject {
         guard copyLegacyBottle else {
             userPrefs.wineBottleMigrationAsked = true
             persistUserPrefs()
-            updateTelemetryConsentPromptState()
             startWineProfileMigrationIfNeeded()
             return
         }
@@ -528,7 +509,6 @@ final class MainDashboardViewModel: ObservableObject {
                     isError: false
                 )
                 self.refreshWineBottleDependentStatuses()
-                self.updateTelemetryConsentPromptState()
                 self.startWineProfileMigrationIfNeeded()
             case .failure(let error):
                 self.patchFeedback = PatchFeedback(
@@ -760,7 +740,7 @@ final class MainDashboardViewModel: ObservableObject {
     private func handleLaunchOutcome(_ outcome: GameLaunchOutcome, version: GameVersion) {
         switch outcome {
         case .started:
-            recordWowStartTelemetry(for: version)
+            break
         case .versionMismatch(let base, let tweaked):
             versionMismatchData = (base, tweaked)
             shouldShowVersionMismatchPrompt = true
@@ -1344,20 +1324,6 @@ final class MainDashboardViewModel: ObservableObject {
         )
     }
 
-    func telemetryEnabledBinding() -> Binding<Bool> {
-        Binding(
-            get: { self.userPrefs.telemetryEnabled },
-            set: { enabled in
-                self.setTelemetryEnabled(enabled, markConsentAsked: true)
-            }
-        )
-    }
-
-    func handleTelemetryConsent(accepted: Bool) {
-        shouldShowTelemetryConsentPrompt = false
-        setTelemetryEnabled(accepted, markConsentAsked: true)
-    }
-
     var optionAsAltStatusText: String {
         switch optionAsAltStatus {
         case .unknown:
@@ -1493,7 +1459,7 @@ final class MainDashboardViewModel: ObservableObject {
 
     private func refreshSnapshot() {
         guard var currentVersion = versionManager.currentVersion else {
-            versionDisplayName = "WoWSilicon"
+            versionDisplayName = "SiloWow"
             subtitleText = "Launch World Of Warcraft from 2006-2010 on Apple Silicon Macs"
             supportsAddons = false
             supportsMods = false
@@ -1689,23 +1655,6 @@ final class MainDashboardViewModel: ObservableObject {
     }
 
     @discardableResult
-    private func normalizeTelemetryPrefs() -> Bool {
-        let trimmedID = userPrefs.telemetryInstallID.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmedID.isEmpty {
-            userPrefs.telemetryInstallID = UUID().uuidString
-            return true
-        }
-        return false
-    }
-
-    private func updateTelemetryConsentPromptState() {
-        shouldShowTelemetryConsentPrompt = !shouldShowMigrationPrompt
-            && !shouldShowWineBottleMigrationPrompt
-            && !wineMigration.isMigrationInProgress
-            && !userPrefs.telemetryConsentAsked
-    }
-
-    @discardableResult
     private func updateWineBottleMigrationPromptState() -> Bool {
         guard !shouldShowMigrationPrompt, !userPrefs.wineBottleMigrationAsked else {
             shouldShowWineBottleMigrationPrompt = false
@@ -1740,17 +1689,16 @@ final class MainDashboardViewModel: ObservableObject {
         switch outcome {
         case .succeeded(let migrated):
             if migrated {
-                debugPrint("Copied the Wine user profile into the configured WoWSilicon bottle; ~/Wine was kept as a backup.")
+                debugPrint("Copied the Wine user profile into the configured SiloWow bottle; ~/Wine was kept as a backup.")
             }
         case .failed(let message):
             debugPrint("Wine user profile migration failed: \(message)")
             patchFeedback = PatchFeedback(
                 title: "Wine Profile Migration Failed",
-                message: "WoWSilicon could not copy the Windows user profile into the selected bottle. Your existing ~/Wine folder was not removed. You can retry from Options. \(message)",
+                message: "SiloWow could not copy the Windows user profile into the selected bottle. Your existing ~/Wine folder was not removed. You can retry from Options. \(message)",
                 isError: true
             )
         }
-        updateTelemetryConsentPromptState()
     }
 
     private func presentWineBottleAlert(_ message: String) {
@@ -1760,37 +1708,6 @@ final class MainDashboardViewModel: ObservableObject {
         alert.informativeText = message
         alert.addButton(withTitle: "OK")
         alert.runModal()
-    }
-
-    private func setTelemetryEnabled(_ enabled: Bool, markConsentAsked: Bool) {
-        userPrefs.telemetryEnabled = enabled
-        TelemetryService.shared.setClientTelemetryEnabled(enabled)
-        if markConsentAsked {
-            userPrefs.telemetryConsentAsked = true
-            shouldShowTelemetryConsentPrompt = false
-        }
-        normalizeTelemetryPrefs()
-        persistUserPrefs()
-        if enabled {
-            recordLaunchTelemetryIfNeeded()
-        }
-    }
-
-    private func recordLaunchTelemetryIfNeeded() {
-        guard userPrefs.telemetryEnabled, !didRecordLaunchTelemetry else { return }
-        didRecordLaunchTelemetry = true
-        TelemetryService.shared.recordLaunch(
-            prefs: userPrefs,
-            context: TelemetryEventContext(version: versionManager.currentVersion)
-        )
-    }
-
-    private func recordWowStartTelemetry(for version: GameVersion) {
-        guard userPrefs.telemetryEnabled else { return }
-        TelemetryService.shared.recordWowStart(
-            prefs: userPrefs,
-            context: TelemetryEventContext(version: version)
-        )
     }
 
     private func handleVanillaTweaksParametersChange(previousValue: String, currentValue: String, version: GameVersion) {

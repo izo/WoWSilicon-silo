@@ -10,7 +10,7 @@ struct VersionStore {
 
     private let fileManager: FileManager
     private let supportDirectory: URL?
-    private let directoryName = "WoWSilicon"
+    private let directoryName = AppIdentityMigration.currentSupportDirectoryName
     private let fileName = "versions.json"
 
     init(fileManager: FileManager = .default, supportDirectory: URL? = nil) {

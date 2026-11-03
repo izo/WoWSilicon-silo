@@ -3,15 +3,15 @@ import XCTest
 
 final class BundledWineRuntimeTests: XCTestCase {
     func testRootUsesBundledResourceByDefault() {
-        let resources = URL(fileURLWithPath: "/Applications/WoWSilicon.app/Contents/Resources", isDirectory: true)
+        let resources = URL(fileURLWithPath: "/Applications/SiloWow.app/Contents/Resources", isDirectory: true)
 
         let result = BundledWineRuntime.rootURL(resourceURL: resources, environment: [:])
 
-        XCTAssertEqual(result?.path, "/Applications/WoWSilicon.app/Contents/Resources/Wine")
+        XCTAssertEqual(result?.path, "/Applications/SiloWow.app/Contents/Resources/Wine")
     }
 
     func testEnvironmentOverrideTakesPrecedence() {
-        let resources = URL(fileURLWithPath: "/Applications/WoWSilicon.app/Contents/Resources", isDirectory: true)
+        let resources = URL(fileURLWithPath: "/Applications/SiloWow.app/Contents/Resources", isDirectory: true)
 
         let result = BundledWineRuntime.rootURL(
             resourceURL: resources,

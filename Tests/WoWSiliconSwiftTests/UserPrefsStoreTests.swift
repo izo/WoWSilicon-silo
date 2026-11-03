@@ -16,7 +16,7 @@ final class UserPrefsStoreTests: XCTestCase {
         let supportURL = try makeTemporaryDirectory()
         let store = UserPrefsStore(supportDirectory: supportURL)
         var prefs = UserPrefs.defaults
-        prefs.telemetryInstallID = "test-install"
+        prefs.remapOptionAsAlt = true
         prefs.wineBottlePath = "/Games/TestBottle"
 
         store.save(prefs)
@@ -28,7 +28,7 @@ final class UserPrefsStoreTests: XCTestCase {
         let supportURL = try makeTemporaryDirectory()
         let store = UserPrefsStore(supportDirectory: supportURL)
         let prefs = UserPrefs.defaults
-        let prefsURL = supportURL.appendingPathComponent("WoWSilicon/prefs.json")
+        let prefsURL = supportURL.appendingPathComponent("SiloWow/prefs.json")
 
         store.save(prefs)
         let originalModificationDate = Date(timeIntervalSince1970: 1_000_000)
