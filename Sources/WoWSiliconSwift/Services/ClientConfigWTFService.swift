@@ -77,11 +77,11 @@ enum ClientConfigWTFService {
 
         for entry in entries where isSafe(key: entry.key, value: entry.value) {
             let line = "SET \(entry.key) \"\(entry.value)\""
-            let prefix = "set \(entry.key.lowercased()) "
+            // `SET`, spaces or tabs, the key, then a separator: case-insensitive, tab-tolerant.
+            let pattern = #"^\s*set\s+"# + NSRegularExpression.escapedPattern(for: entry.key) + #"\s"#
             var found = false
             for index in lines.indices {
-                let trimmed = lines[index].trimmingCharacters(in: .whitespaces).lowercased()
-                if trimmed.hasPrefix(prefix) {
+                if lines[index].range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil {
                     lines[index] = lines[index].hasSuffix("\r") ? line + "\r" : line
                     found = true
                 }

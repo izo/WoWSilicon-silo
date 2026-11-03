@@ -35,6 +35,14 @@ final class ClientConfigWTFServiceTests: XCTestCase {
         XCTAssertEqual(out, "SET gxApi \"D3D11\"\r\nSET Gamma \"1.0\"\r\n")
     }
 
+    func testKeyMatchAcceptsTabsAndRepeatedSpaces() {
+        let out = ClientConfigWTFService.updatedContent(
+            "SET\tportal \"US\"\n  set   gxApi\t\"D3D12\"\nSET portalExtra \"keep\"\n",
+            entries: [("portal", "h:1"), ("gxApi", "D3D11")]
+        )
+        XCTAssertEqual(out, "SET portal \"h:1\"\nSET gxApi \"D3D11\"\nSET portalExtra \"keep\"\n")
+    }
+
     func testRefusesValuesThatCouldInjectLines() {
         XCTAssertTrue(ClientConfigWTFService.isValidPortal("wow.ulk.me:1119"))
         XCTAssertFalse(ClientConfigWTFService.isValidPortal("a.b\"\nSET x \"1"))
