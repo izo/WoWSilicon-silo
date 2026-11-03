@@ -10,7 +10,7 @@ final class LaunchPerformanceInterval {
 
 enum LaunchPerformance {
     private static let signposter = OSSignposter(
-        subsystem: "com.wowsilicon.swift",
+        subsystem: "silowow.regrets.app",
         category: "Launch Performance"
     )
 

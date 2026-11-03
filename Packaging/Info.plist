@@ -13,7 +13,7 @@
 		<string>turtle</string>
 	</array>
 	<key>CFBundleIdentifier</key>
-	<string>com.wowsilicon.swift</string>
+	<string>silowow.regrets.app</string>
 	<key>CFBundleName</key>
 	<string>WoWSilicon</string>
 	<key>CFBundlePackageType</key>

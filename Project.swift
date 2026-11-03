@@ -2,7 +2,7 @@ import ProjectDescription
 
 let project = Project(
     name: "WoWSilicon",
-    organizationName: "com.wowsilicon",
+    organizationName: "silowow.regrets",
     packages: [
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.1")
     ],
@@ -34,7 +34,7 @@ let project = Project(
             name: "WoWSilicon",
             destinations: .macOS,
             product: .app,
-            bundleId: "com.wowsilicon.swift",
+            bundleId: "silowow.regrets.app",
             deploymentTargets: .macOS("14.0"),
             infoPlist: .file(path: "Packaging/Info.plist"),
             sources: ["Sources/WoWSiliconSwift/**/*.swift"],
@@ -47,7 +47,7 @@ let project = Project(
             settings: .settings(
                 base: [
                     "INFOPLIST_FILE": "Packaging/Info.plist",
-                    "PRODUCT_BUNDLE_IDENTIFIER": "com.wowsilicon.swift",
+                    "PRODUCT_BUNDLE_IDENTIFIER": "silowow.regrets.app",
                     "PRODUCT_NAME": "WoWSilicon",
                     "ASSETCATALOG_COMPILER_APPICON_NAME": "turtle",
                     "COMBINE_HIDPI_IMAGES": "YES",
